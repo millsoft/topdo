@@ -1,0 +1,14 @@
+{
+    "name": "millsoft/topdo",
+    "description": "Old SQL to PDO Parser",
+    "type": "project",
+    "authors": [
+        {
+            "name": "Michael Milawski",
+            "email": "michael.milawski@planet-itservices.com"
+        }
+    ],
+    "require": {
+        "nikic/php-parser": "^4.2"
+    }
+}

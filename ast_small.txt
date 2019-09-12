@@ -1,0 +1,14 @@
+array(
+    0: Stmt_Expression(
+        expr: Expr_Assign(
+            var: Expr_Variable(
+                name: sql
+            )
+            expr: Scalar_String(
+                value: SELECT * FROM bla
+            )
+        )
+    )
+    1: Stmt_Nop(
+    )
+)
