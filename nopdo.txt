@@ -1,0 +1,9 @@
+    $sql = "SELECT 
+                GROUP_CONCAT(id   SEPARATOR ',') 
+                FROM twm_attributes 
+                WHERE class='Baureihe'
+                  AND media_speaker = " . $User->id . " 
+                  AND data_status = 1 
+                  AND id_system_client= " . $App->id_client . " 
+                ";
+    $myModelRows = $Core->fromDatabase($sql, '@simple', false, false);
