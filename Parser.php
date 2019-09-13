@@ -26,6 +26,11 @@ class Parser
 
     public static $lines     = [];
     public static $sqlParams = [];
+    public static $curVar = '';
+
+    public static function addLine($code){
+        self::$lines[] = '$' .  self::$curVar . ' = ' . $code . ';';
+    }
 
     public static function parseMethodCall ($node)
     {

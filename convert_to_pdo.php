@@ -4,6 +4,7 @@
  * Ein Script mit dem man non PDO Scripte ins PDO umwandeln kann.
  * Es schaut ob in einer Query Variablen drin sind und ersetzt diese durch Platzhalter
  */
+
 use PhpParser\Error;
 use PhpParser\NodeDumper;
 use PhpParser\ParserFactory;
@@ -23,11 +24,17 @@ use PhpParser\NodeVisitorAbstract;
 // Regex: https://regex101.com/r/bErI90/2/
 
 
-
 require_once __DIR__ . "/vendor/autoload.php";
 require_once __DIR__ . "/Parser.php";
 
 
+$inputFile = __DIR__ . "/data/input.txt";
+$outputFile = __DIR__ . "/data/output.txt";
+
+$code = '<?php' . "\n" . file_get_contents($inputFile);
+
+
+/*
 $code = <<<'CODE'
 <?php
 
@@ -42,10 +49,8 @@ $sql = 'UPDATE `' . $tableName . '` SET `created`=now() WHERE `id`=' . $lastInse
 $Core->toDatabase($sql);
 
 CODE;
+*/
 
-echo "INPUT:\n*****************\n";
-echo $code;
-echo "\n*****************\n";
 $parser = (new ParserFactory)->create(ParserFactory::PREFER_PHP7);
 try {
     $ast = $parser->parse($code);
@@ -55,69 +60,60 @@ try {
 }
 
 $dumper = new NodeDumper;
-echo $dumper->dump($ast) . "\n";
+//echo $dumper->dump($ast) . "\n";
 
 
 $traverser = new NodeTraverser();
-$traverser->addVisitor(new class extends NodeVisitorAbstract {
-    public function enterNode(Node $node) {
+$traverser->addVisitor(new class extends NodeVisitorAbstract
+{
+    public function enterNode (Node $node)
+    {
         $class = get_class($node);
-        echo "*** " . $class . "\n";
+        //echo "*** " . $class . "\n";
 
         //print_r($node);
 
 
+        $var = '';
 
-        if($node instanceof Node\Stmt\Expression
+        if (
+            $node instanceof Node\Stmt\Expression
             && $node->expr instanceof Node\Expr\Assign
-        ){
+        ) {
 
             //Variablenzuweisung:
-            Parser::$lines[] = '$' . $node->expr->var->name . ' = ';
-
+            //Parser::$lines[] = '$' . $node->expr->var->name . ' = ';
+            $var = '$' . $node->expr->var->name . ' = ';
+            Parser::$curVar = $node->expr->var->name;
             //$name = $node->expr->name->toString();
 
 
-//            return NodeTraverser::DONT_TRAVERSE_CHILDREN;
+            //            return NodeTraverser::DONT_TRAVERSE_CHILDREN;
 
         }
 
 
-        if($node instanceof MethodCall){
-            Parser::$lines[] = Parser::parseMethodCall($node);
+        if ($node instanceof MethodCall) {
+
+            Parser::addLine( Parser::parseMethodCall($node) );
+            //Parser::$lines[] = $var . Parser::parseMethodCall($node);
         }
 
-        if($node instanceof Concat){
+        if ($node instanceof Concat) {
+
+            //Parser::$lines[] = $var . Parser::parseConcat($node);
+            Parser::addLine("'" . Parser::parseConcat($node) . "'");
+
+            //$name = $node->expr->name->toString();
+
+            return NodeTraverser::DONT_TRAVERSE_CHILDREN;
 
 
-
-        Parser::$lines[] = Parser::parseConcat($node);
-
-        //$name = $node->expr->name->toString();
-
-        return NodeTraverser::DONT_TRAVERSE_CHILDREN;
-
-
-    }
-
-
-
-        echo "\n";
-    }
-
-
-    /*
-    public function leaveNode(Node $node) {
-        $class = get_class($node);
-
-        print_r("LEAVE_NODE = " . $class . "\n");
-
-        if ($node instanceof Function_) {
-            // Clean out the function body
-            $node->stmts = [];
         }
+
+
+        //echo "\n";
     }
-    */
 
 
 });
@@ -126,5 +122,11 @@ $traverser->addVisitor(new class extends NodeVisitorAbstract {
 $ast = $traverser->traverse($ast);
 //echo $dumper->dump($ast) . "\n";
 
-print_r(Parser::$lines);
-print_r(Parser::$sqlParams);
+//print_r(Parser::$sqlParams);
+//print_r(Parser::$lines);
+
+$outData = implode("\n", Parser::$lines);
+echo $outData;
+
+//file_put_contents($outputFile, $outData);
+
