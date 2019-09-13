@@ -92,6 +92,8 @@ class Parser
         $newParams = [];
         if ($node->name->name == 'fromDatabase') {
             //neue fromDatabase Params:
+
+
             $newParams[0] = $params[0];  //sql
             $newParams[1] = $params[1] ?? 'FIELD';  //field
             $newParams[2] = self::createArrayString(self::$sqlParams);  //PDO Params
@@ -133,6 +135,15 @@ class Parser
         $allowForbiddenAction = false,
         $withLog = false,
         $logTitle = ""
+
+
+            UPDATE:
+        $sql,
+        $__pdo__ = [],
+        $withLog = false,
+        $allowForbiddenAction = false,
+        $logTitle = ''
+
     ) {
 
             ALT:
@@ -152,12 +163,12 @@ class Parser
 
             //$withLog
             if (isset($params[1])) {
-                $newParams[3] = $params[1];
+                $newParams[2] = $params[1];
             }
 
             //$allowForbiddenAction
             if (isset($params[2])) {
-                $newParams[2] = $params[2];
+                $newParams[3] = $params[2];
             }
 
             //$allowForbiddenAction
@@ -215,6 +226,14 @@ class Parser
 
     }
 
+    /**
+     * Parst einen String
+     * Wandelt inkludierte Variablen in Platzhalter um
+     * @param $node
+     * @param $side
+     *
+     * @return Node\Scalar\string|string
+     */
     public static function parseConcatSide ($node, $side)
     {
 
@@ -242,6 +261,13 @@ class Parser
             //$sideVal = ':' . $s->dim->value;
             $sideVal = ':' . self::parseArrayName($s);
             $valName = self::parseArrayName($s);
+
+        } elseif ($s instanceof Node\Expr\PropertyFetch ) {
+
+            //$sideVal =  '$' .   $s->var->name . '->' . $s->name->name;
+            $sideVal =  ':' .  $s->name->name;
+            self::$sqlParams[ $s->name->name ] = '$' .   $s->var->name . '->' . $s->name->name;
+
         } elseif ($s instanceof Node\Scalar\Encapsed) {
             //Variablen direkt im String
             $sideVal = '';
