@@ -59,7 +59,10 @@ try {
     return;
 }
 
+//print_r($ast);
+
 $dumper = new NodeDumper;
+
 //echo $dumper->dump($ast) . "\n";
 
 
@@ -101,15 +104,19 @@ $traverser->addVisitor(new class extends NodeVisitorAbstract
 
         if ($node instanceof Concat) {
 
-            //Parser::$lines[] = $var . Parser::parseConcat($node);
             Parser::addLine("'" . Parser::parseConcat($node) . "'");
-
-            //$name = $node->expr->name->toString();
-
             return NodeTraverser::DONT_TRAVERSE_CHILDREN;
-
-
         }
+
+        if ($node instanceof Node\Scalar\Encapsed) {
+
+            Parser::addLine("<<<sql\n" . Parser::parseEncapsed($node) . "\nsql;");
+            return NodeTraverser::DONT_TRAVERSE_CHILDREN;
+        }
+
+
+
+
 
 
         //echo "\n";

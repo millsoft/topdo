@@ -20,6 +20,8 @@ use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\BinaryOp\Concat;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitorAbstract;
+use PhpParser\PrettyPrinter;
+
 
 class Parser
 {
@@ -27,6 +29,9 @@ class Parser
     public static $lines     = [];
     public static $sqlParams = [];
     public static $curVar = '';
+
+    //Nummer für anonyme Platzhalter (wird inkrementiert)
+    public static $countVar = 0;
 
     public static function addLine($code){
         self::$lines[] = '$' .  self::$curVar . ' = ' . $code . ';';
@@ -45,10 +50,13 @@ class Parser
         $params = [];
 
         if ($node->var instanceof Variable) {
+²
+            echo "***** VAR!\n";
+            print_r($node->name);
+
 
             if (
-                $node->var->name === 'Core'
-                && in_array($node->name->name, [
+                in_array($node->name->name, [
                     'fromDatabase',
                     'toDatabase'
                 ])) {
@@ -226,6 +234,42 @@ class Parser
 
     }
 
+
+
+    public static function parseEncapsed ($node)
+    {
+
+
+        $out = [];
+        foreach($node->parts as $part){
+            if($part instanceof Node\Scalar\EncapsedStringPart){
+                $out[] = self::parseEncapsedStringPart($part);
+            }
+
+            if($part instanceof Variable){
+                $out[] = self::parseVariable($part);
+            }
+
+        }
+
+        return implode('', $out);
+
+
+    }
+
+    public static function  parseEncapsedStringPart(Node\Scalar\EncapsedStringPart $s){
+        return $s->value;
+    }
+
+    public static function  parseVariable(Variable $s){
+        self::$sqlParams[$s->name] = '$' . $s->name;
+        return ':' .  $s->name;
+    }
+
+
+
+
+
     /**
      * Parst einen String
      * Wandelt inkludierte Variablen in Platzhalter um
@@ -283,6 +327,16 @@ class Parser
 
             }
 
+        } elseif ($s instanceof Node\Expr\MethodCall  ) {
+            $sideVal = ':' .  self::parseMethodCall($s);
+
+        } elseif ($s instanceof Node\Expr\Ternary || $s instanceof Node\Expr\FuncCall) {
+
+            $prettyPrinter = new PrettyPrinter\Standard;
+            $valName = self::getAnonymePlaceholderName();
+            $sideVal = ':' .  $valName;
+            self::$sqlParams[$valName] = $prettyPrinter->prettyPrintExpr($s);
+
         } else {
             $class = get_class($s);
             echo "!!! " . $class . "\n";
@@ -292,6 +346,51 @@ class Parser
 
 
         return $sideVal;
+    }
+
+    /**
+     * Anonymen Platzhalter Namen holen
+     * Wird beim Aufruf um 1 inkrementiert
+     * @return string
+     */
+    private static function getAnonymePlaceholderName(){
+        self::$countVar++;
+        return 'val_' . self::$countVar;
+    }
+
+    public static function  getCodeFromNode($node){
+        $parser        = (new ParserFactory)->create(ParserFactory::PREFER_PHP7);
+        $traverser     = new NodeTraverser;
+        $prettyPrinter = new PrettyPrinter\Standard;
+
+        $traverser->addVisitor(new class extends NodeVisitorAbstract{
+            public function leaveNode(Node $node) {
+                if ($node instanceof Node\Scalar\String_) {
+                    $node->value = 'foo';
+                }
+            }
+        });
+
+
+
+        try {
+            $code = file_get_contents($fileName);
+
+            // parse
+            $stmts = $parser->parse($code);
+
+            // traverse
+            $stmts = $traverser->traverse($stmts);
+
+            // pretty print
+            $code = $prettyPrinter->prettyPrintFile($stmts);
+
+            echo $code;
+        } catch (PhpParser\Error $e) {
+            echo 'Parse Error: ', $e->getMessage();
+        }
+
+
     }
 
     public static function parseArrayName ($a)
