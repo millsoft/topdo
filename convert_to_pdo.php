@@ -15,6 +15,7 @@ use PhpParser\Node\Stmt\Function_;
 use PhpParser\Node\Stmt\Expression;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Expr\Assign;
+use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\BinaryOp\Concat;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitorAbstract;
@@ -30,8 +31,15 @@ require_once __DIR__ . "/Parser.php";
 $code = <<<'CODE'
 <?php
 
-$sql = "SELECT * FROM bla WHERE id = " . $a['aba'] . " LIMIT 5 " . $x['yyy']['aaaa'];
+//$sql = "SELECT * FROM bla WHERE id = " . $a['aba'] . " LIMIT 5 " . $x['yyy']['aaaa'];
 //$myModelRows = $Core->fromDatabase($sql, '@simple', false, false);
+
+
+//$sql = "SELECT * FROM test WHERE id = " . $user_id . " AND x = $test_id";
+//$myModelRows = $Core->fromDatabase($sql, '@simple');
+
+$sql = 'UPDATE `' . $tableName . '` SET `created`=now() WHERE `id`=' . $lastInsertId;
+$Core->toDatabase($sql);
 
 CODE;
 
@@ -54,25 +62,20 @@ $traverser = new NodeTraverser();
 $traverser->addVisitor(new class extends NodeVisitorAbstract {
     public function enterNode(Node $node) {
         $class = get_class($node);
-
-        //print_r("ENTER_NODE = " . $class);
+        echo "*** " . $class . "\n";
 
         //print_r($node);
+
+
 
         if($node instanceof Node\Stmt\Expression
             && $node->expr instanceof Node\Expr\Assign
         ){
 
             //Variablenzuweisung:
-            Parser::$lines[] = $node->expr->var->name . '=';
+            Parser::$lines[] = '$' . $node->expr->var->name . ' = ';
 
-            /*
-            echo "\n****\n";
-            print_r($node->expr);
-            */
-
-            //$name = $node->expr->name->toString();  
-            
+            //$name = $node->expr->name->toString();
 
 
 //            return NodeTraverser::DONT_TRAVERSE_CHILDREN;
@@ -80,15 +83,18 @@ $traverser->addVisitor(new class extends NodeVisitorAbstract {
         }
 
 
-        if($node instanceof Concat
-    ){
+        if($node instanceof MethodCall){
+            Parser::$lines[] = Parser::parseMethodCall($node);
+        }
+
+        if($node instanceof Concat){
 
 
 
         Parser::$lines[] = Parser::parseConcat($node);
 
-        //$name = $node->expr->name->toString();  
-        
+        //$name = $node->expr->name->toString();
+
         return NodeTraverser::DONT_TRAVERSE_CHILDREN;
 
 
@@ -121,3 +127,4 @@ $ast = $traverser->traverse($ast);
 //echo $dumper->dump($ast) . "\n";
 
 print_r(Parser::$lines);
+print_r(Parser::$sqlParams);
