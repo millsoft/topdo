@@ -1,15 +1,13 @@
-		$sql = <<<sql
-		SELECT *
-		FROM twm_systemlog
-			WHERE
-				`action` = 'login user'
-				AND description LIKE '%login failed'
-				AND ip = '{$ip}'
-				AND id__affected = $id_users
+$sql = <<<sql
+SELECT * FROM fridge
+	WHERE
+		`action` = $action,
+		AND ip = '{$ip}'
+		AND test1 = {$_GET['TEST']}
+		AND test2 = {$_GET['TEST']['test2']}
 
-			ORDER BY id DESC
-			LIMIT $limit
+	LIMIT $limit
 sql;
 
 
-		$loginAttempts = $this->Core->fromDatabase($sql, "@raw");
+$loginAttempts = $this->Core->fromDatabase($sql, "@raw", true);

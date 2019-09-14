@@ -4,15 +4,15 @@
 ^!#7::
 ;press CTRL+C
 Send , ^c
-clipfile = I:\michel.pits\httpdocs\topdo\data\input.txt
-outfile = I:\michel.pits\httpdocs\topdo\data\output.txt
-tmpfile = I:\michel.pits\httpdocs\topdo\data\tmp.txt
+clipfile = D:\htdocs\topdo\data\input.txt
+outfile = D:\htdocs\topdo\data\output.txt
+tmpfile = D:\htdocs\topdo\data\tmp.txt
 
 FileDelete,%clipfile%
 FileAppend,%clipboard%,%clipfile%
 
 ;call the parser -> this will generate the "out.txt" file
-UrlDownloadToFile, http://michel.pits/topdo/convert_to_pdo.php, %outfile%
+UrlDownloadToFile, http://localhost:8070/topdo/convert_to_pdo.php, %outfile%
 
 ;read the out file to %r% variable:
 FileRead, r, %outfile%

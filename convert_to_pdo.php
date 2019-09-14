@@ -33,23 +33,10 @@ $outputFile = __DIR__ . "/data/output.txt";
 
 $code = '<?php' . "\n" . file_get_contents($inputFile);
 
+//echo "******************************************* BEFORE:\n";
+//print_r($code);
+//echo "\n\n******************************************* AFTER:\n";
 
-/*
-$code = <<<'CODE'
-<?php
-
-//$sql = "SELECT * FROM bla WHERE id = " . $a['aba'] . " LIMIT 5 " . $x['yyy']['aaaa'];
-//$myModelRows = $Core->fromDatabase($sql, '@simple', false, false);
-
-
-//$sql = "SELECT * FROM test WHERE id = " . $user_id . " AND x = $test_id";
-//$myModelRows = $Core->fromDatabase($sql, '@simple');
-
-$sql = 'UPDATE `' . $tableName . '` SET `created`=now() WHERE `id`=' . $lastInsertId;
-$Core->toDatabase($sql);
-
-CODE;
-*/
 
 $parser = (new ParserFactory)->create(ParserFactory::PREFER_PHP7);
 try {
@@ -110,7 +97,7 @@ $traverser->addVisitor(new class extends NodeVisitorAbstract
 
         if ($node instanceof Node\Scalar\Encapsed) {
 
-            Parser::addLine("<<<sql\n" . Parser::parseEncapsed($node) . "\nsql;");
+            Parser::addLine("<<<sql\n" . Parser::parseEncapsed($node) . "\nsql");
             return NodeTraverser::DONT_TRAVERSE_CHILDREN;
         }
 
