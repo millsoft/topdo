@@ -312,8 +312,22 @@ class Parser
     //  $SomeObject->someProperty
     public static function  parsePropertyFetch($s)
     {
+        
+        if($s->var instanceof ArrayDimFetch){
+            //$na = self::parseArrayName($s);
+            //print_r($na);
+            //die();
+        }
+        //return self::parseArrayName($s);
+
+
+        
         $sideVal =  ':' .  $s->name->name;
-        self::$sqlParams[$s->name->name] = '$' .   $s->var->name . '->' . $s->name->name;
+
+        $var = self::getCodeFromNode($s);
+        //self::$sqlParams[$s->name->name] = '$' .   $s->var->name . '->' . $s->name->name;
+        self::$sqlParams[$s->name->name] = $var;
+
         return $sideVal;
     }
 
@@ -459,6 +473,14 @@ class Parser
         return $name;
     }
 
+    /**
+     * Get code part as string from a expr node
+     */
+    private static function getCodeFromNode($node){
+        $prettyPrinter = new PrettyPrinter\Standard;
+        $code = $prettyPrinter->prettyPrintExpr($node);
+        return $code;
+    }
     
     private static function cleanUp($code){
         
