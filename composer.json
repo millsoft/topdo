@@ -10,5 +10,11 @@
     ],
     "require": {
         "nikic/php-parser": "^4.2"
+    },
+
+    "autoload": {
+        "psr-4": {
+            "": "src"
+        }
     }
 }

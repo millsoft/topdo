@@ -3,7 +3,7 @@
 /**
  * Parser for converting old SQL Methods to PDO
  * For Planet ITservices Projects, mainly TWM
- * By Mike
+ * By Michael Milawski
  * 14.09.2019
  */
 
@@ -15,6 +15,8 @@ use PhpParser\{
     NodeVisitorAbstract,
     PrettyPrinter
 };
+
+use PhpParser\Node;
 
 use PhpParser\Node\{
     Name,
@@ -35,7 +37,8 @@ use PhpParser\Node\Expr\{
     PropertyFetch,
     BinaryOp\Concat,
     Assign,
-    Ternary
+    Ternary,
+    Cast\Int_
 };
 
 
@@ -50,6 +53,10 @@ class Parser
     //Nummer für anonyme Platzhalter (wird inkrementiert)
     public static $countVar = 0;
     private static $sqlParamsVarName = '$sql_params';
+
+    //Did the input had the fromDatabase / toDatabase function? If not, we will print the extracted parameters of the $sql in the last line.
+    public static $hadDatabaseFunction = false;
+    private static $paramsLineAdded = false;
 
     /**
      * Add new parsed code line
@@ -70,11 +77,13 @@ class Parser
         self::$lines[] = $wVar . $code . ';';
     }
 
-    private static function decamelize($string) {
+    private static function decamelize($string)
+    {
         return strtolower(preg_replace(['/([a-z\d])([A-Z])/', '/([^_])([A-Z][a-z])/'], '$1_$2', $string));
     }
 
-    private static function getVariableNameFromMethodName($methodName){
+    private static function getVariableNameFromMethodName($methodName)
+    {
         $methodName = str_ireplace('get', '', $methodName);
         $methodName = self::decamelize($methodName);
         return $methodName;
@@ -85,7 +94,7 @@ class Parser
 
         $fn = [];
         $params = [];
-        
+
 
         $isDbMethod = false;
 
@@ -97,18 +106,17 @@ class Parser
                     'toDatabase'
                 ])
             ) {
+
+                self::$hadDatabaseFunction  = true;
                 $isDbMethod = true;
                 //kein Core, sondern DB
                 $fn[] = 'DB::';
             } else {
+
                 $isDbMethod = false;
                 $fn[] = '$' . $node->var->name . '->';
-                
-                $realVar = self::getVariableNameFromMethodName($node->name->name);
-                //$fn[] = $varName;
 
-                //Lets ovcerwrite the var
-                //$realVar = $varName;
+                $realVar = self::getVariableNameFromMethodName($node->name->name);
 
             }
         } elseif ($node->var instanceof PropertyFetch) {
@@ -152,7 +160,6 @@ class Parser
 
             $newParams[0] = $params[0];  //sql
             $newParams[1] = $params[1] ?? 'FIELD';  //field
-            //$newParams[2] = self::createArrayString(self::$sqlParams);  //PDO Params
             $newParams[2] = self::$sqlParamsVarName;
 
             //$html
@@ -189,7 +196,6 @@ class Parser
              */
 
             $newParams[0] = $params[0];
-            //$newParams[1] = self::createArrayString(self::$sqlParams);
             $newParams[1] = self::$sqlParamsVarName;
 
             //$withLog
@@ -230,15 +236,12 @@ class Parser
 
         if ($isDatabaseFunction == true) {
             //create an array before database functions:
-            //self::addLine("FICK!", false);
-            $params = self::createArrayString(self::$sqlParams);
-            self::addLine(self::$sqlParamsVarName . ' = ' . $params, false);
 
+            self::addParamsLine();
         }
 
-        if(isset($realVar)){
-            self::$sqlParams[$realVar] = $val;
-            $val = $realVar;
+        if (isset($realVar)) {
+            $val = self::addSqlParam($realVar, $val);
         }
 
         return $val;
@@ -258,6 +261,8 @@ class Parser
         return $out;
     }
 
+
+    //Parse the whole string that is splitted, eg: "string1" . $var . "string2"
     public static function parseConcat($node)
     {
 
@@ -270,13 +275,12 @@ class Parser
 
 
 
+    //parse variables that are inside a string
     public static function parseEncapsed($node)
     {
 
 
         $out = [];
-        //print_r($node->parts);
-        //die();
 
         foreach ($node->parts as $part) {
 
@@ -298,37 +302,24 @@ class Parser
 
     public static function  parseEncapsedStringPart($s)
     {
-        //die("HERE!");
         return $s->value;
     }
 
     public static function  parseVariable(Variable $s)
     {
-        self::$sqlParams[$s->name] = '$' . $s->name;
-        return ':' .  $s->name;
+        $val = self::addSqlParam($s->name, '$' . $s->name);
+        return ':' .  $val;
     }
 
 
     //  $SomeObject->someProperty
     public static function  parsePropertyFetch($s)
     {
-        
-        if($s->var instanceof ArrayDimFetch){
-            //$na = self::parseArrayName($s);
-            //print_r($na);
-            //die();
-        }
-        //return self::parseArrayName($s);
-
-
-        
-        $sideVal =  ':' .  $s->name->name;
 
         $var = self::getCodeFromNode($s);
-        //self::$sqlParams[$s->name->name] = '$' .   $s->var->name . '->' . $s->name->name;
-        self::$sqlParams[$s->name->name] = $var;
+        $val = self::addSqlParam( $s->name->name, $var);
 
-        return $sideVal;
+        return ':' . $val;
     }
 
 
@@ -364,17 +355,16 @@ class Parser
             $valName = $s->name;
             $valVal = '$' . $s->name;
 
-            self::$sqlParams[$valName] = $valVal;
+            $sideVal =  ':' . self::addSqlParam($valName, $valVal);
+            
+            
         } //Array:
         elseif ($s instanceof ArrayDimFetch) {
             $sideVal = ':' . self::parseArrayName($s);
             $valName = self::parseArrayName($s);
-
-            
         } // $object->someproperty:
         elseif ($s instanceof  PropertyFetch) {
             $sideVal = self::parsePropertyFetch($s);
-
         } // normal "$variables in string"
         elseif ($s instanceof Encapsed) {
             $sideVal = '';
@@ -384,23 +374,26 @@ class Parser
                 }
 
                 if ($part instanceof Variable) {
-                    $sideVal .= ':' . $part->name;
-                    self::$sqlParams[$part->name] = '$' . $part->name;
+                    $sideVal = self::addSqlParam($valName, '$' . $part->name);
                 }
             }
-
         } // $object->methodCall()
         elseif ($s instanceof MethodCall) {
             $sideVal = ':' .  self::parseMethodCall($s);
-
         } // Ternary operator ($x == 1 ? 1 : 2) and functions()
         elseif ($s instanceof Ternary || $s instanceof FuncCall) {
 
             $prettyPrinter = new PrettyPrinter\Standard;
             $valName = self::getAnonymePlaceholderName();
-            $sideVal = ':' .  $valName;
-            self::$sqlParams[$valName] = $prettyPrinter->prettyPrintExpr($s);
-                
+
+            $sideVal = ':' . self::addSqlParam($valName, $prettyPrinter->prettyPrintExpr($s));
+
+        } // cast to (int)
+        elseif ($s instanceof Int_) {
+            //no additional parsing, just get the code:
+            $valName = self::getAnonymePlaceholderName();
+            $sideVal = ':' . self::addSqlParam($valName, self::getCodeFromNode($s->expr));
+
         } //Something unrecognized.
         else {
             $class = get_class($s);
@@ -446,7 +439,6 @@ class Parser
         //print_r($a);
 
         $prettyPrinter = new PrettyPrinter\Standard;
-        //self::$sqlParams[$valName] = $prettyPrinter->prettyPrintExpr($s);
         $code = $prettyPrinter->prettyPrintExpr($a);
 
 
@@ -464,7 +456,7 @@ class Parser
         if (!$isRecursive) {
             $lastKeyName = $matches2[count($matches2) - 1]['key'];
 
-            self::$sqlParams[$lastKeyName] = $code;
+            $lastKeyName = self::addSqlParam($lastKeyName, $code);
             return $lastKeyName;
         }
 
@@ -473,22 +465,189 @@ class Parser
         return $name;
     }
 
-    /**
-     * Get code part as string from a expr node
-     */
-    private static function getCodeFromNode($node){
-        $prettyPrinter = new PrettyPrinter\Standard;
-        $code = $prettyPrinter->prettyPrintExpr($node);
-        return $code;
-    }
-    
-    private static function cleanUp($code){
-        
+
+
+    private static function cleanUp($code)
+    {
+
+
         //replace ':placeholder' with :placeholder
         $re = '/[\"\']\:(.+?)[\"\']/i';
         $code = preg_replace($re, ':$1', $code);
 
+        //replace ':placeholder' with :placeholder
+
         return $code;
     }
 
+
+    /**
+     * Get code part as string from a expr node
+     */
+    private static function getCodeFromNode($node)
+    {
+        $prettyPrinter = new PrettyPrinter\Standard;
+        $code = $prettyPrinter->prettyPrintExpr($node);
+        return $code;
+    }
+
+    /**
+     * Add a line with the array of parameters
+     *
+     * @return void
+     */
+    public static function addParamsLine()
+    {
+        if (self::$paramsLineAdded) {
+            return false;
+        }
+
+        $params = self::createArrayString(self::$sqlParams);
+        self::addLine(self::$sqlParamsVarName . ' = ' . $params, false);
+
+        self::$paramsLineAdded = true;
+    }
+
+    /**
+     * Add a sql param name+value
+     *
+     * @param string $name - name of the placeholder / value
+     * @param string $val
+     * @return string the final name for the $name.
+     */
+    private static function addSqlParam($name, $val){
+        
+        //check if the key is already in params,
+        //placehodler values can't be reused in PDO
+        if(isset(self::$sqlParams[$name])){
+            //extract the real var name without index:
+
+            //iterate index until we can use the key:
+            $acceptableIndexFound = false;
+
+            //start the additional found variables with this index:
+            $index = 2;
+            while(!$acceptableIndexFound){
+
+                $newName = $name . '_' . $index;
+                echo "CHECK: $newName";
+                if(!isset(self::$sqlParams[$newName])){
+                    //found free name
+                    $name = $newName ;
+                    $acceptableIndexFound = true;
+                }
+                $index++;
+            }
+        }
+
+        //add the param:
+        self::$sqlParams[$name] = $val;
+
+        //return the final name for the placeholder
+        return $name;
+    }
+
+
+    
+    /**
+     * Starting point for the parser
+     *
+     * @param string $code - unparsed php code
+     * @return string - parsed php code
+     */
+    public static function parse($code)
+    {
+
+
+        $parser = (new ParserFactory)->create(ParserFactory::PREFER_PHP7);
+        try {
+            $ast = $parser->parse($code);
+        } catch (Error $error) {
+            echo "Parse error: {$error->getMessage()}\n";
+            return;
+        }
+
+
+        $traverser = new NodeTraverser();
+        $traverser->addVisitor(new class extends NodeVisitorAbstract
+        {
+            public function enterNode(Node $node)
+            {
+                $class = get_class($node);
+
+
+                $var = '';
+
+                if (
+                    $node instanceof Expression
+                ) {
+
+                    if($node->expr instanceof Assign){
+                    //Variablenzuweisung:
+                    $var = '$' . $node->expr->var->name . ' = ';
+                    Parser::$curVar = $node->expr->var->name;
+                    //$name = $node->expr->name->toString();
+
+                    }
+
+
+                    //            return NodeTraverser::DONT_TRAVERSE_CHILDREN;
+
+                } elseif ($node instanceof Assign) {
+                    $var = '$' . $node->var->name . ' = ';
+                    Parser::$curVar = $node->var->name;
+                    //return NodeTraverser::DONT_TRAVERSE_CHILDREN;
+
+
+                } elseif ($node instanceof Variable) {
+
+
+                } elseif ($node instanceof ArrayDimFetch) {
+                    //print_r($node);die();
+
+                } elseif ($node instanceof Identifier) {
+                    //print_r($node);die();
+
+                    
+                } elseif ($node instanceof PropertyFetch) {
+                    //print_r($node);die();
+
+                    
+                } elseif ($node instanceof MethodCall) {
+
+                    Parser::addLine(Parser::parseMethodCall($node));
+                    //Parser::$lines[] = $var . Parser::parseMethodCall($node);
+                } elseif ($node instanceof Concat) {
+
+                    Parser::addLine("'" . Parser::parseConcat($node) . "'");
+                    return NodeTraverser::DONT_TRAVERSE_CHILDREN;
+                } elseif ($node instanceof Node\Scalar\Encapsed) {
+
+                    Parser::addLine("<<<sql\n" . Parser::parseEncapsed($node) . "\nsql");
+                    return NodeTraverser::DONT_TRAVERSE_CHILDREN;
+                } else {
+                    //die("NOT_RECOGNIZED:" . get_class($node));
+                }
+
+
+            }
+        });
+
+
+        $ast = $traverser->traverse($ast);
+
+
+        if (!Parser::$hadDatabaseFunction) {
+            //tell to append the sql parameters anyway (if available)
+            Parser::addParamsLine();
+        }
+
+        $outData = implode("\n", Parser::$lines);
+
+        //Make sure the from/todatabase are from DB class
+        $re = '/= (from|to)Database/';
+        $outData = preg_replace($re, '= DB::$1Database', $outData);
+
+        return $outData;
+    }
 }
