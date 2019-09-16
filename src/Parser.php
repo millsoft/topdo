@@ -7,6 +7,7 @@
  * 14.09.2019
  */
 
+
 use PhpParser\{
     Error,
     NodeDumper,
@@ -298,21 +299,27 @@ class Parser
         $out = [];
 
         foreach ($node->parts as $part) {
-
-            if ($part instanceof EncapsedStringPart) {
-                $out[] = self::parseEncapsedStringPart($part);
-            } elseif ($part instanceof Variable) {
-                $out[] = self::parseVariable($part);
-            } elseif ($part instanceof PropertyFetch) {
-                $out[] = self::parsePropertyFetch($part);
-            } elseif ($part instanceof ArrayDimFetch) {
-                $out[] = ':' . self::parseArrayName($part);
-            } else {
-                die("not parsed: " . get_class($part));
-            }
+            $out[] = self::parsePart($part);
         }
 
         return implode('', $out);
+    }
+
+    public static function parsePart($part){
+            
+            if ($part instanceof EncapsedStringPart) {
+                $out = self::parseEncapsedStringPart($part);
+            } elseif ($part instanceof Variable) {
+                $out = self::parseVariable($part);
+            } elseif ($part instanceof PropertyFetch) {
+                $out = self::parsePropertyFetch($part);
+            } elseif ($part instanceof ArrayDimFetch) {
+                $out = ':' . self::parseArrayName($part);
+            } else {
+                die("not parsed: " . get_class($part));
+            }
+
+            return $out;
     }
 
     public static function  parseEncapsedStringPart($s)
@@ -362,7 +369,7 @@ class Parser
             //print_r($sideVal);
             //die();
             //die("HERE!");
-            
+
         }
         
 
@@ -647,6 +654,30 @@ class Parser
 
     }
 
+
+
+    //input code prepare
+    public static function prepareCode($code){
+
+        
+        $quote = self::getFirstQuoteChar($code);
+
+        //prepend SQL queries with an empty string, so the parser goes through a concat parser:
+
+
+        $re = '/(\$.+?)=(.+?[\'\"])(SELECT|INSERT|UPDATE|DELETE)/i';
+        
+        if($quote == "'"){
+            $subst = '$1= \'\' . $2$3';
+        }else{
+            $subst = '$1= "" . $2$3';
+        }
+
+        $result = preg_replace($re, $subst, $code);
+
+        return $result;
+    }
+
     /**
      * Starting point for the parser
      *
@@ -662,6 +693,8 @@ class Parser
 
         //reset everything:
         self::resetCode();
+
+        $code = self::prepareCode($code);
 
         $parser = (new ParserFactory)->create(ParserFactory::PREFER_PHP7);
         try {
@@ -688,6 +721,8 @@ class Parser
                 ) {
 
                     if($node->expr instanceof Assign){
+
+                    /*
                     //Variablenzuweisung:
                     $nodeCode = Parser::getCodeFromNode($node->expr);
                     $quoteChar = Parser::getFirstQuoteChar($nodeCode);
@@ -695,20 +730,42 @@ class Parser
                     $var = '$' . $node->expr->var->name . ' = ';
                     Parser::$curVar = $node->expr->var->name;
                     Parser::$quoteChar = $quoteChar;
+                    */
                     //$name = $node->expr->name->toString();
 
+                    echo $var;
                     }
 
 
                     //            return NodeTraverser::DONT_TRAVERSE_CHILDREN;
 
                 } elseif ($node instanceof Assign) {
+                    //print_r($node);
+                    //die();
+
                     $var = '$' . $node->var->name . ' = ';
                     Parser::$curVar = $node->var->name;
                     //return NodeTraverser::DONT_TRAVERSE_CHILDREN;
 
 
                 } elseif ($node instanceof Variable) {
+                    //print_r($node);
+                    //Parser::addLine(Parser::parseMethodCall($node));
+                    //KURWA
+                    $pa = Parser::parsePart($node);
+                    //print_r($pa);
+                    //die("KURWA1");
+
+
+                    /*
+                    Parser::addLine(
+                          Parser::$quoteChar
+                        . Parser::parseConcat($node)
+                        . Parser::$quoteChar);
+                    */
+
+                    return NodeTraverser::DONT_TRAVERSE_CHILDREN;
+                    
 
 
                 } elseif ($node instanceof ArrayDimFetch) {
