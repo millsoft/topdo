@@ -1,102 +1,122 @@
-array(
-    0: Stmt_Expression(
-        expr: Expr_Assign(
-            var: Expr_Variable(
-                name: sql
-            )
-            expr: Expr_BinaryOp_Concat(
-                left: Expr_BinaryOp_Concat(
-                    left: Expr_BinaryOp_Concat(
-                        left: Expr_BinaryOp_Concat(
-                            left: Scalar_String(
-                                value: SELECT 
-                            GROUP_CONCAT(id   SEPARATOR ',') 
-                            FROM twm_attributes 
-                            WHERE class='Baureihe'
-                              AND media_speaker = 
-                            )
-                            right: Expr_PropertyFetch(
-                                var: Expr_Variable(
-                                    name: User
-                                )
-                                name: Identifier(
-                                    name: id
-                                )
-                            )
+*** PhpParser\Node\Stmt\Expression
+PhpParser\Node\Stmt\Expression Object
+(
+    [expr] => PhpParser\Node\Expr\Assign Object
+        (
+            [var] => PhpParser\Node\Expr\Variable Object
+                (
+                    [name] => sql
+                    [attributes:protected] => Array
+                        (
+                            [startLine] => 2
+                            [endLine] => 2
                         )
-                        right: Scalar_String(
-                            value:  
-                          AND data_status = 1 
-                          AND id_system_client= 
-                        )
-                    )
-                    right: Expr_PropertyFetch(
-                        var: Expr_Variable(
-                            name: App
-                        )
-                        name: Identifier(
-                            name: id_client
-                        )
-                    )
+
                 )
-                right: Scalar_String(
-                    value:  
-                
+
+            [expr] => PhpParser\Node\Expr\BinaryOp\Concat Object
+                (
+                    [left] => PhpParser\Node\Scalar\String_ Object
+                        (
+                            [value] => 
+                            [attributes:protected] => Array
+                                (
+                                    [startLine] => 2
+                                    [endLine] => 2
+                                    [kind] => 2
+                                )
+
+                        )
+
+                    [right] => PhpParser\Node\Scalar\Encapsed Object
+                        (
+                            [parts] => Array
+                                (
+                                    [0] => PhpParser\Node\Scalar\EncapsedStringPart Object
+                                        (
+                                            [value] => INSERT INTO twm_users_locks SET locked_until = DATE_ADD(NOW(), INTERVAL 
+                                            [attributes:protected] => Array
+                                                (
+                                                    [startLine] => 2
+                                                    [endLine] => 2
+                                                )
+
+                                        )
+
+                                    [1] => PhpParser\Node\Expr\PropertyFetch Object
+                                        (
+                                            [var] => PhpParser\Node\Expr\Variable Object
+                                                (
+                                                    [name] => this
+                                                    [attributes:protected] => Array
+                                                        (
+                                                            [startLine] => 2
+                                                            [endLine] => 2
+                                                        )
+
+                                                )
+
+                                            [name] => PhpParser\Node\Identifier Object
+                                                (
+                                                    [name] => lockTime
+                                                    [attributes:protected] => Array
+                                                        (
+                                                            [startLine] => 2
+                                                            [endLine] => 2
+                                                        )
+
+                                                )
+
+                                            [attributes:protected] => Array
+                                                (
+                                                    [startLine] => 2
+                                                    [endLine] => 2
+                                                )
+
+                                        )
+
+                                    [2] => PhpParser\Node\Scalar\EncapsedStringPart Object
+                                        (
+                                            [value] =>  SECOND)
+                                            [attributes:protected] => Array
+                                                (
+                                                    [startLine] => 2
+                                                    [endLine] => 2
+                                                )
+
+                                        )
+
+                                )
+
+                            [attributes:protected] => Array
+                                (
+                                    [startLine] => 2
+                                    [endLine] => 2
+                                    [kind] => 2
+                                )
+
+                        )
+
+                    [attributes:protected] => Array
+                        (
+                            [startLine] => 2
+                            [endLine] => 2
+                        )
+
                 )
-            )
+
+            [attributes:protected] => Array
+                (
+                    [startLine] => 2
+                    [endLine] => 2
+                )
+
         )
-    )
-    1: Stmt_Expression(
-        expr: Expr_Assign(
-            var: Expr_Variable(
-                name: myModelRows
-            )
-            expr: Expr_MethodCall(
-                var: Expr_Variable(
-                    name: Core
-                )
-                name: Identifier(
-                    name: fromDatabase
-                )
-                args: array(
-                    0: Arg(
-                        value: Expr_Variable(
-                            name: sql
-                        )
-                        byRef: false
-                        unpack: false
-                    )
-                    1: Arg(
-                        value: Scalar_String(
-                            value: @simple
-                        )
-                        byRef: false
-                        unpack: false
-                    )
-                    2: Arg(
-                        value: Expr_ConstFetch(
-                            name: Name(
-                                parts: array(
-                                    0: false
-                                )
-                            )
-                        )
-                        byRef: false
-                        unpack: false
-                    )
-                    3: Arg(
-                        value: Expr_ConstFetch(
-                            name: Name(
-                                parts: array(
-                                    0: false
-                                )
-                            )
-                        )
-                        byRef: false
-                        unpack: false
-                    )
-                )
-            )
+
+    [attributes:protected] => Array
+        (
+            [startLine] => 2
+            [endLine] => 2
         )
-    )
+
 )

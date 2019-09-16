@@ -103,6 +103,20 @@ class Parser
         return $methodName;
     }
 
+
+    /**
+     * Return the variable to sql params or an empty array
+     * @return [type] [description]
+     */
+    public static function getSqlParamsVar(){
+        //self::$sqlParamsVarName
+        if(count(self::$sqlParams)){
+            return self::$sqlParamsVarName;
+        }else{
+            return '[]';
+        }
+    }
+
     public static function parseMethodCall($node)
     {
 
@@ -176,7 +190,7 @@ class Parser
 
             $newParams[0] = $params[0];  //sql
             $newParams[1] = $params[1] ?? 'FIELD';  //field
-            $newParams[2] = self::$sqlParamsVarName;
+            $newParams[2] = self::getSqlParamsVar();
 
             //$html
             if (isset($params[2])) {
@@ -212,7 +226,7 @@ class Parser
              */
 
             $newParams[0] = $params[0];
-            $newParams[1] = self::$sqlParamsVarName;
+            $newParams[1] = self::getSqlParamsVar();
 
             //$withLog
             if (isset($params[1])) {
@@ -362,6 +376,9 @@ class Parser
         $valName = '__DEFAULTNAME__';
         $valVal = 'VAL_VAL';
 
+
+
+
         //Concat...
         if ($node->{$side} instanceof Concat) {
             //$sideVal = self::parseConcat($node->{$side});
@@ -381,7 +398,10 @@ class Parser
 
         //String
         elseif ($s instanceof String_) {
+            //print_r($s);
             $sideVal = $s->value;
+            $valName = '';
+
         } //Variable
         elseif ($s instanceof Variable) {
             $sideVal = ':' . $s->name;
@@ -400,16 +420,8 @@ class Parser
             $sideVal = self::parsePropertyFetch($s);
         } // normal "$variables in string"
         elseif ($s instanceof Encapsed) {
-            $sideVal = '';
-            foreach ($s->parts as $part) {
-                if ($part instanceof EncapsedStringPart) {
-                    $sideVal .= $part->value;
-                }
+            $sideVal = self::parseEncapsed($s);
 
-                if ($part instanceof Variable) {
-                    $sideVal = self::addSqlParam($valName, '$' . $part->name);
-                }
-            }
         } // $object->methodCall()
         elseif ($s instanceof MethodCall) {
             $sideVal = ':' .  self::parseMethodCall($s);
@@ -531,7 +543,7 @@ class Parser
      */
     public static function addParamsLine()
     {
-        if (self::$paramsLineAdded) {
+        if (self::$paramsLineAdded || empty(self::$sqlParams)) {
             return false;
         }
 
@@ -631,26 +643,27 @@ class Parser
             return $char;
         }
 
-
         $pos_1 = (int) $pos_1;
         $pos_2 = (int) $pos_2;
 
         if($pos_1 == 0){
-            //Pfusch ;)
+            //move to back
             $pos_1 = 99999999;
         }
 
         if($pos_2 == 0){
-            //Pfusch ;)
+            //move to back
             $pos_2 = 99999999;
         }
 
         if(  $pos_1 > 0 && $pos_1 < $pos_2){
-            //"
-            return '"';
+            $quoteChar =  '"';
         }else{
-             return "'";
+             $quoteChar =  "'";
         }
+
+        self::$quoteChar = $quoteChar;
+        return $quoteChar;
 
     }
 
@@ -659,11 +672,9 @@ class Parser
     //input code prepare
     public static function prepareCode($code){
 
-        
         $quote = self::getFirstQuoteChar($code);
 
         //prepend SQL queries with an empty string, so the parser goes through a concat parser:
-
 
         $re = '/(\$.+?)=(.+?[\'\"])(SELECT|INSERT|UPDATE|DELETE)/i';
         
@@ -710,9 +721,11 @@ class Parser
         {
             public function enterNode(Node $node)
             {
-                $class = get_class($node);
+                //DEBUG: uncomment that stuff for debugging
+                //$class = get_class($node);
                 //print_r("*** $class\n");
-
+                //print_r($node);
+                //die();
 
                 $var = '';
 
@@ -733,11 +746,13 @@ class Parser
                     */
                     //$name = $node->expr->name->toString();
 
-                    echo $var;
+                    //echo $var;
+
+            //return NodeTraverser::DONT_TRAVERSE_CHILDREN;
                     }
 
 
-                    //            return NodeTraverser::DONT_TRAVERSE_CHILDREN;
+                    
 
                 } elseif ($node instanceof Assign) {
                     //print_r($node);
@@ -749,10 +764,11 @@ class Parser
 
 
                 } elseif ($node instanceof Variable) {
+
                     //print_r($node);
                     //Parser::addLine(Parser::parseMethodCall($node));
                     //KURWA
-                    $pa = Parser::parsePart($node);
+                    //$pa = Parser::parsePart($node);
                     //print_r($pa);
                     //die("KURWA1");
 
@@ -763,10 +779,10 @@ class Parser
                         . Parser::parseConcat($node)
                         . Parser::$quoteChar);
                     */
-
-                    return NodeTraverser::DONT_TRAVERSE_CHILDREN;
-                    
-
+                        //die("VAR!");
+                    //return NodeTraverser::DONT_TRAVERSE_CHILDREN;
+                        //print_r($node);
+                        //echo "VAR!";
 
                 } elseif ($node instanceof ArrayDimFetch) {
                     //print_r($node);die();
@@ -784,6 +800,7 @@ class Parser
                     Parser::addLine(Parser::parseMethodCall($node));
                     //Parser::$lines[] = $var . Parser::parseMethodCall($node);
                 } elseif ($node instanceof Concat) {
+                    //KURWA1
                     Parser::addLine(
                           Parser::$quoteChar
                         . Parser::parseConcat($node)
