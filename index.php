@@ -90,7 +90,7 @@ $this->Core->toDatabase($sql);
 
 	<h3>Tipps</h3>
 	<ul>
-		<li>Wer es schneller haben will, kann sich mal das AutoHotkey Makro anschauen <a href="convert_to_pdo.ahk">convert_to_pdo.ahk</a>. Damit kann man einen Text im Codeeditor markieren, eine Tastenkombination drücken und die Auswahl wird sofort durch den neuen Code ersetzt. Wer es will, sollte sich dieses Projekt aber lokal klonen, da das Makro nur eine input-Datei einließt.</li>
+		<li>Wer es schneller haben will, kann sich mal das AutoHotkey Makro anschauen <a href="convert_to_pdo.ahk">convert_to_pdo.ahk</a>. Damit kann man einen Text im Codeeditor markieren, eine Tastenkombination drücken und die Auswahl wird sofort durch den neuen Code ersetzt. Wer es will, sollte sich dieses Projekt aber lokal <a href="https://github.com/millsoft/topdo" target="_blank">klonen</a>, da das Makro nur eine input-Datei einließt.</li>
 	</ul>
 
 
