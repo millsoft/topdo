@@ -50,6 +50,7 @@ class Parser
     public static $sqlParams = [];
 
     public static $curVar = '';
+    public static $quoteChar = '"';
 
     //Nummer für anonyme Platzhalter (wird inkrementiert)
     public static $countVar = 0;
@@ -139,7 +140,9 @@ class Parser
 
             if ($arg->value instanceof Variable) {
                 $params[] = '$' . $arg->value->name;
-            } elseif ($arg->value instanceof String_) {
+            } elseif ($arg->value instanceof ArrayDimFetch) {
+                $params[] = self::parseArrayName($arg->value);
+            } elseif ($arg->value instanceof String_) {                
                 $params[] = "'" . $arg->value->value . "'";
             } elseif ($arg->value instanceof ConstFetch) {
                 //Konstanten, z.B. true, false, etc...
@@ -489,7 +492,7 @@ class Parser
     /**
      * Get code part as string from a expr node
      */
-    private static function getCodeFromNode($node)
+    public static function getCodeFromNode($node)
     {
         $prettyPrinter = new PrettyPrinter\Standard;
         $code = $prettyPrinter->prettyPrintExpr($node);
@@ -539,6 +542,9 @@ class Parser
      */
     private static function addSqlParam($name, $val){
         
+        //Replace placeholder minus with underscore
+        $name = str_replace('-', '_', $name);
+
         //check if the key is already in params,
         //placehodler values can't be reused in PDO
         if(isset(self::$sqlParams[$name])){
@@ -570,6 +576,10 @@ class Parser
     }
 
 
+    /**
+     * Reset parser (between test code and real code generation)
+     * @return void
+     */
     public static function resetCode(){
         self::$lines = [];
         self::$sqlParams = [];
@@ -581,6 +591,45 @@ class Parser
     }
     
     /**
+     * Is the first occurentce of a variabled string a " or ' ?
+     * @param  [string] $code
+     * @return [string]
+     */
+    public static function getFirstQuoteChar($code){
+        //search for "
+        $pos_1 = strpos($code, '"');
+        $pos_2 = strpos($code, "'");
+
+        $char = '"';
+        if($pos_1 === false && $pos_2 === false){
+            //return default char:
+            return $char;
+        }
+
+
+        $pos_1 = (int) $pos_1;
+        $pos_2 = (int) $pos_2;
+
+        if($pos_1 == 0){
+            //Pfusch ;)
+            $pos_1 = 99999999;
+        }
+
+        if($pos_2 == 0){
+            //Pfusch ;)
+            $pos_2 = 99999999;
+        }
+
+        if(  $pos_1 > 0 && $pos_1 < $pos_2){
+            //"
+            return '"';
+        }else{
+             return "'";
+        }
+
+    }
+
+    /**
      * Starting point for the parser
      *
      * @param string $code - unparsed php code
@@ -591,6 +640,7 @@ class Parser
     {
 
         self::$isTest = $getTestCode;
+
 
         //reset everything:
         self::resetCode();
@@ -610,6 +660,7 @@ class Parser
             public function enterNode(Node $node)
             {
                 $class = get_class($node);
+                //print_r("*** $class\n");
 
 
                 $var = '';
@@ -620,8 +671,12 @@ class Parser
 
                     if($node->expr instanceof Assign){
                     //Variablenzuweisung:
+                    $nodeCode = Parser::getCodeFromNode($node->expr);
+                    $quoteChar = Parser::getFirstQuoteChar($nodeCode);
+
                     $var = '$' . $node->expr->var->name . ' = ';
                     Parser::$curVar = $node->expr->var->name;
+                    Parser::$quoteChar = $quoteChar;
                     //$name = $node->expr->name->toString();
 
                     }
@@ -654,8 +709,11 @@ class Parser
                     Parser::addLine(Parser::parseMethodCall($node));
                     //Parser::$lines[] = $var . Parser::parseMethodCall($node);
                 } elseif ($node instanceof Concat) {
+                    Parser::addLine(
+                          Parser::$quoteChar
+                        . Parser::parseConcat($node)
+                        . Parser::$quoteChar);
 
-                    Parser::addLine("'" . Parser::parseConcat($node) . "'");
                     return NodeTraverser::DONT_TRAVERSE_CHILDREN;
                 } elseif ($node instanceof Node\Scalar\Encapsed) {
 

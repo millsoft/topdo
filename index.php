@@ -70,7 +70,7 @@ $this->Core->toDatabase($sql);
 	<p>
 		Der Umwandlungsprozess sieht so aus:
 		<ul>
-			<li>Code in Parser einlesen (nikic/php-parser)</li>
+			<li>Code in Parser einlesen (Library: nikic/php-parser)</li>
 			<li>Bei Strings werden alle inkludierten Variablen rausgeparst und durch Platzhalter ersetzt, dabei wird ein Param-Array gebildet</li>
 			<li>Die SQL Parameter (Array) wird als eine eigene Variable generiert.</li>
 			<li>Die fromDatabase / toDatabase wird durch die DB:: Methoden ersetzt.</li>

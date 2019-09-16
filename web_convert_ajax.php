@@ -5,7 +5,7 @@
  * Ein Script mit dem man non PDO Scripte ins PDO umwandeln kann.
  * Es schaut ob in einer Query Variablen drin sind und ersetzt diese durch Platzhalter
  */
-
+ob_start();
 require_once __DIR__ . "/vendor/autoload.php";
 //require_once __DIR__ . "/src/Parser.php";
 
@@ -26,6 +26,9 @@ $codeOk = CodeChecker::check($testCode);
 if($codeOk){
 	$finalCode = Parser::parse($code, false);
 	echo $finalCode;
+}else{
+	echo "// ***************** TESTCODE:\n";
+	echo $testCode;
 }
 
 
