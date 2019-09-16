@@ -74,7 +74,7 @@ $this->Core->toDatabase($sql);
 			<li>Bei Strings werden alle inkludierten Variablen rausgeparst und durch Platzhalter ersetzt, dabei wird ein Param-Array gebildet</li>
 			<li>Die SQL Parameter (Array) wird als eine eigene Variable generiert.</li>
 			<li>Die fromDatabase / toDatabase wird durch die DB:: Methoden ersetzt.</li>
-			<li>Der generierte Code wird getestet: Die SQL Query wird mit EXPLAIN ausgeführt. Die Datenbank für die Tests ist twm_latest. Sollte der Generator einen Fehlerhaften Code generieren, wird das im rechten Fenster gezeigt.</li>
+			<li>Der generierte Code wird getestet: Die SQL Query wird mit EXPLAIN ausgeführt. Die Datenbank für die Tests ist die aktuelle TWM Datenbank. Sollte der Generator einen Fehlerhaften Code generieren, wird das im rechten Fenster gezeigt. Fehler treten auf wenn z.B. die SQL Syntax falsch ist, Columns nicht gefunden wurden oder der PHP Code einen Fehler enthielt</li>
 			<li>Ist der Code in Ordnung, wird dieser rechts ins Textarea eingefügt</li>
 		</ul>
 	</p>
@@ -90,7 +90,7 @@ $this->Core->toDatabase($sql);
 
 	<h3>Tipps</h3>
 	<ul>
-		<li>Wer es schneller haben will, kann sich mal das AutoHotkey Makro anschauen <a href="convert_to_pdo.ahk">convert_to_pdo.ahk</a>. Damit kann man einen Text im Codeeditor markieren, eine Tastenkombination drücken und die Auswahl wird sofort durch den neuen Code ersetzt.</li>
+		<li>Wer es schneller haben will, kann sich mal das AutoHotkey Makro anschauen <a href="convert_to_pdo.ahk">convert_to_pdo.ahk</a>. Damit kann man einen Text im Codeeditor markieren, eine Tastenkombination drücken und die Auswahl wird sofort durch den neuen Code ersetzt. Wer es will, sollte sich dieses Projekt aber lokal klonen, da das Makro nur eine input-Datei einließt.</li>
 	</ul>
 
 
