@@ -48,6 +48,7 @@ class Parser
 
     public static $lines     = [];
     public static $sqlParams = [];
+
     public static $curVar = '';
 
     //Nummer für anonyme Platzhalter (wird inkrementiert)
@@ -57,6 +58,10 @@ class Parser
     //Did the input had the fromDatabase / toDatabase function? If not, we will print the extracted parameters of the $sql in the last line.
     public static $hadDatabaseFunction = false;
     private static $paramsLineAdded = false;
+
+    //if test, only test code will be returned.
+    //this will be set in the parse() method
+    private static $isTest = false;
 
     /**
      * Add new parsed code line
@@ -502,7 +507,20 @@ class Parser
             return false;
         }
 
-        $params = self::createArrayString(self::$sqlParams);
+
+        if(self::$isTest){
+            //change all values to some valid value (removes functions, vars, etc..)
+            $newParams = [];
+            foreach(self::$sqlParams as $key=>$val){
+                $newParams[$key] = 0;
+            }
+
+            $params = self::createArrayString($newParams);
+
+        }else{
+            $params = self::createArrayString(self::$sqlParams);
+        }
+
         self::addLine(self::$sqlParamsVarName . ' = ' . $params, false);
 
         self::$paramsLineAdded = true;
@@ -530,7 +548,7 @@ class Parser
             while(!$acceptableIndexFound){
 
                 $newName = $name . '_' . $index;
-                echo "CHECK: $newName";
+                //echo "CHECK: $newName";
                 if(!isset(self::$sqlParams[$newName])){
                     //found free name
                     $name = $newName ;
@@ -548,16 +566,30 @@ class Parser
     }
 
 
+    public static function resetCode(){
+        self::$lines = [];
+        self::$sqlParams = [];
+        self::$curVar = '';
+        self::$countVar = 0;
+        self::$hadDatabaseFunction = false;
+        self::$paramsLineAdded = false;
+
+    }
     
     /**
      * Starting point for the parser
      *
      * @param string $code - unparsed php code
+     * @param string $getTestCode - code for local testing (eval, pdo checks..)
      * @return string - parsed php code
      */
-    public static function parse($code)
+    public static function parse($code, $getTestCode = false)
     {
 
+        self::$isTest = $getTestCode;
+
+        //reset everything:
+        self::resetCode();
 
         $parser = (new ParserFactory)->create(ParserFactory::PREFER_PHP7);
         try {

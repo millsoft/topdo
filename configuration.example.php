@@ -3,13 +3,12 @@
     class Configuration
     {
 
-
         public $db = [
             
-            'host' => 'localhost',
-            'database' => 'twm',
+            'host' => 'vm-dev',
+            'database' => 'twm_latest',
             'user' => 'root',
-            'password' => 'hopsing',
+            'password' => 'XXXXX',
 
         ];
        

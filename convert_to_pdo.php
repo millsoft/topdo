@@ -12,11 +12,20 @@ require_once __DIR__ . "/vendor/autoload.php";
 $inputFile = __DIR__ . "/data/input.txt";
 //$outputFile = __DIR__ . "/data/output.txt";
 
+//Prepare the code for php parser:
 $code = '<?php' . "\n" . file_get_contents($inputFile);
 
-$output = Parser::parse($code);
+//Generate the code with test parameters so we can test the whole code:
+$testCode = Parser::parse($code, true);
 
-echo $output;
+//Check the generated sourcecode for errors:
+$codeOk = CodeChecker::check($testCode);
+
+if($codeOk){
+	$finalCode = Parser::parse($code, false);
+	echo $finalCode;
+}
+
 
 
 

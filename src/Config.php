@@ -82,7 +82,13 @@
                 include($config_file_local);
             }else{
                 self::setEnvironment('live');
+
+                if(!file_exists($config_file_live)){
+                    die("configuration.php is missing! Copy configuration.example.php!");
+                }
+
                 include($config_file_live);
+
             }
 
             self::setConfig($Configuration);

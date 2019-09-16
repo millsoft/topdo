@@ -3,7 +3,7 @@
 /**
  * Class Database
  */
-class DB extends Base
+class DB
 {
 
     private static $db_toTimes = []; // global cache array
@@ -19,7 +19,7 @@ class DB extends Base
     {
         global $Configuration;
 
-        ob_clean();
+        //ob_clean();
 
         self::connectTWM();
     }
@@ -30,13 +30,16 @@ class DB extends Base
             return;
         }
 
-        $db_port = Config::get('db_port', 3306);
-        $db_type = Config::get('db_type', 'mysql');
-        $db_host = Config::get('host');
-        $db_name = Config::get('database');
-        $db_charset = Config::get('db_charset', 'utf8');
-        $db_username = Config::get('user');
-        $db_password = Config::get('password');
+        $db = Config::get("db");
+
+
+        $db_port = $db['db_port'] ?? 3306;
+        $db_type = 'mysql';
+        $db_host = $db['host'];
+        $db_name = $db['database'];
+        $db_charset = 'utf8';
+        $db_username = $db['user'];
+        $db_password = $db['password'];
         self::connect($db_host, $db_name, $db_username, $db_password, $db_port, $db_type, $db_charset);
         self::$connected_db = 'twm';
         self::$connected_db_name = $db_name;
@@ -117,22 +120,19 @@ class DB extends Base
         $rewriteForViews = true
     ) {
 
+        $sql = "EXPLAIN " . $sql;
 
         //WTF ist das??? :
         if (is_bool($__pdo__)) {
             $html = $__pdo__;
             $__pdo__ = [];
 
-            TinyError::throwError('__pdo__ is bool, $html paramater replaced with params bool, params is set to array');
         }
 
         if(is_null($__pdo__) || is_string($__pdo__)){
             $__pdo__ = [];
         }
 
-        if (!$sql) {
-            TinyError::throwError('SQL STATEMENT MISSING!');
-        }
 
         if (!$field) {
             self::warning('$field param is missing or empty, will assume `id` as field');
@@ -145,7 +145,7 @@ class DB extends Base
             "__pdo__" => $__pdo__
         ];
 
-        TinyError::addAdditionalInfoForError("SQL", $extras);
+        
 
 
         $resultArray = [];
@@ -153,14 +153,11 @@ class DB extends Base
         $result = self::cachedQuery($sql);
 
         if (!$result) {
-            TinyError::throwError("BASIC SQL Error: " . $sql);
+            
         }
 
-        try {
             $exe = $result->execute($__pdo__);
-        } catch (PDOException $e) {
-            TinyError::throwError('SQL EXECUTION Error: ' . $sql . ' - ' . $e->getMessage());
-        }
+
 
         if ($exe === false) {
             // 0 SQLSTATE error code (a five characters alphanumeric identifier defined in the ANSI SQL standard).
@@ -168,7 +165,7 @@ class DB extends Base
             // 2 Driver-specific error message.
             $errorMsg = $result->errorInfo();
 
-            TinyError::throwError('SQL ERROR on: ' . $sql . ' <br/> PDO ERRORINFO: ' . $errorMsg[2]);
+            //TinyError::throwError('SQL ERROR on: ' . $sql . ' <br/> PDO ERRORINFO: ' . $errorMsg[2]);
         }
 
         $rowCount = $result->rowCount();
@@ -466,6 +463,9 @@ class DB extends Base
     ) {
         global $Helper, $Logs;
 
+
+        $sql = "EXPLAIN " . $sql;
+
         $extras = [
             "sql"                  => $sql,
             "params"               => $__pdo__,
@@ -474,12 +474,11 @@ class DB extends Base
             "logTitle"             => $logTitle
         ];
 
-
         //printr(self::modules);
 
 
-        LogFile::write($sql, $__pdo__);
-        TinyError::addAdditionalInfoForError("SQL", $extras);
+        //LogFile::write($sql, $__pdo__);
+        //TinyError::addAdditionalInfoForError("SQL", $extras);
 
         if (is_bool($__pdo__)) {
             $withLog = $__pdo__;
@@ -489,26 +488,22 @@ class DB extends Base
         }
 
         if (!$sql) {
-            TinyError::throwError('SQL STATEMENT MISSING!');
+            //TinyError::throwError('SQL STATEMENT MISSING!');
         }
 
-        self::toConsole($sql);
+        //self::toConsole($sql);
 
         $debugArray = debug_backtrace();
 
-        if (Parameter::get('debugModeState')) {
-            self::debugMessage('sql', $sql);
-        }
-
         if ((preg_match('/^UPDATE/i', $sql)) && (!preg_match('/ WHERE /i', $sql)) && (!$allowForbiddenAction)) {
-            TinyError::throwError('Use of UPDATE statement without "WHERE" clause is forbidden (use allowForbiddenAction?)!');
+            //TinyError::throwError('Use of UPDATE statement without "WHERE" clause is forbidden (use allowForbiddenAction?)!');
         }
 
         if (
             (preg_match('/^DELETE/i', $sql))
             && (!preg_match('/LIMIT 1 |LIMIT 1$/i', $sql))
             && (!$allowForbiddenAction)) {
-            TinyError::throwError('Use of DELETE statement without "LIMIT 1" is forbidden (use allowForbiddenAction?)!');
+            //TinyError::throwError('Use of DELETE statement without "LIMIT 1" is forbidden (use allowForbiddenAction?)!');
         }
 
         $params = self::escapeArray($__pdo__);
@@ -517,7 +512,7 @@ class DB extends Base
 
 
         if (!$result) {
-            TinyError::throwError("BASIC SQL Error: " . $sql);
+            //TinyError::throwError("BASIC SQL Error: " . $sql);
             //throw new Exception("BASIC SQL Error");
         }
 
@@ -544,7 +539,7 @@ class DB extends Base
 
                     $Logs->logInsert($tableName, $lastInsertId, $logTitle);
                 } catch (PDOException $e) {
-                    TinyError::throwError('SQL EXECUTION Error: ' . $sql . ' - ' . $e->getMessage());
+                    //TinyError::throwError('SQL EXECUTION Error: ' . $sql . ' - ' . $e->getMessage());
                 }
             }
 
@@ -575,7 +570,7 @@ class DB extends Base
 
                     $Logs->logUpdate($tableName, $id, $oldValues, $newValues, $logTitle);
                 } catch (PDOException $e) {
-                    TinyError::throwError('SQL EXECUTION Error: ' . $sql . ' - ' . $e->getMessage());
+                    //TinyError::throwError('SQL EXECUTION Error: ' . $sql . ' - ' . $e->getMessage());
                 }
             }
 
@@ -590,7 +585,7 @@ class DB extends Base
 
                     $Logs->logSystemAction($id, 'delete statement', $sql);
                 } catch (PDOException $e) {
-                    TinyError::throwError('SQL EXECUTION Error: ' . $sql . ' - ' . $e->getMessage());
+                    //TinyError::throwError('SQL EXECUTION Error: ' . $sql . ' - ' . $e->getMessage());
                 }
             }
 
@@ -600,7 +595,7 @@ class DB extends Base
                 // 2 Driver-specific error message.
                 $errorMsg = $result->errorInfo();
 
-                TinyError::throwError('SQL ERROR on: ' . $sql . ' <br/> PDO ERRORINFO: ' . $errorMsg[2]);
+                //TinyError::throwError('SQL ERROR on: ' . $sql . ' <br/> PDO ERRORINFO: ' . $errorMsg[2]);
             } else {
                 return (true);
             }
@@ -610,21 +605,16 @@ class DB extends Base
                 preg_match('/INSERT INTO `(.+?)`/i', $sql, $matches);
                 $tableName = $matches[1];
 
-                try {
                     $exe = $result->execute($__pdo__);
 
                     // Save last inserted id
                     $lastInsertId = self::$pdo->lastInsertId();
                     $_POST['last_insert_id'] = $lastInsertId;
-                } catch (PDOException $e) {
-                    TinyError::throwError('SQL EXECUTION Error: ' . $sql . ' - ' . $e->getMessage());
-                }
+
+                
             } else {
-                try {
                     $exe = $result->execute($__pdo__);
-                } catch (PDOException $e) {
-                    TinyError::throwError('SQL EXECUTION Error: ' . $sql . ' - ' . $e->getMessage());
-                }
+
             }
 
             if ($exe === false) {
@@ -633,7 +623,6 @@ class DB extends Base
                 // 2 Driver-specific error message.
                 $errorMsg = $result->errorInfo();
 
-                TinyError::throwError('SQL ERROR on: ' . $sql . ' <br/> PDO ERRORINFO: ' . $errorMsg[2]);
             } else {
                 return (true);
             }
@@ -716,7 +705,7 @@ class DB extends Base
         }
 
         foreach ($__pdo__ as $key => $val) {
-            $val = Web::purifyHtml($val);
+            //$val = Web::purifyHtml($val);
 
             $cleanArray[$key] = $val;
         }
