@@ -16,10 +16,14 @@ require_once(__DIR__ . '/../vendor/autoload.php');
 $sourcecode
 code;
 
-	//print testcode (will be removed if everything is ok)
-	echo "**** ERROR ****\nFollowing with the Testcode that was executed. The error message is on the bottom.\n\n";
-	print_r($testcode);
-	echo "\n\n:**** ERROR OUTPUT: ****\n";
+
+	if(ob_get_level()){
+	
+		//print testcode (will be removed if everything is ok)
+		echo "**** ERROR ****\nFollowing with the Testcode that was executed. The error message is on the bottom.\n\n";
+		print_r($testcode);
+		echo "\n\n:**** ERROR OUTPUT: ****\n";
+	}
 
 
 try {
@@ -33,8 +37,12 @@ try {
 }
 
 	
+	if(ob_get_level()){
 		//Code seems to be ok, remove testcode from output:
 		ob_clean();		
+	}
+
+
 		return true;
 
 	}

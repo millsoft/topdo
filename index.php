@@ -43,7 +43,7 @@
 					<textarea  id="input">
 $sql = "INSERT INTO twm_users_locks SET
 locked_until = DATE_ADD(NOW(), INTERVAL {$this->lockTime} SECOND),
-id_users = {$id_users},
+id_users = " . $id_users . " AND
 ip = '{$ip}'
 ON DUPLICATE KEY UPDATE locked_until = DATE_ADD(NOW(), INTERVAL {$this->lockTime} SECOND)
 ";

@@ -75,7 +75,14 @@ class Parser
     {
         $wVar = '';
         if ($withVar) {
-            $wVar = '$' .  self::$curVar . ' = ';
+
+            if(stripos($code, 'todatabase') !== false){
+                //toDatabase no need for var:
+            }else{
+                $wVar = '$' .  self::$curVar . ' = ';
+            }
+
+
         }
 
 
@@ -332,9 +339,6 @@ class Parser
 
 
 
-
-
-
     /**
      * Parse a concated string
      * Replaces recognized variables with placeholders
@@ -353,8 +357,22 @@ class Parser
 
         //Concat...
         if ($node->{$side} instanceof Concat) {
+            //$sideVal = self::parseConcat($node->{$side});
+            //echo "XXXX ";
+            //print_r($sideVal);
+            //die();
+            //die("HERE!");
+            
+        }
+        
+
+        if ($s instanceof Concat) {
             $sideVal = self::parseConcat($s);
-        } //String
+            return $sideVal;
+
+        } //Variable
+
+        //String
         elseif ($s instanceof String_) {
             $sideVal = $s->value;
         } //Variable
