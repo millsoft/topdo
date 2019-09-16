@@ -528,7 +528,7 @@ class Parser
         ksort($finalParams);
         $params = self::createArrayString($finalParams);
 
-        self::addLine(self::$sqlParamsVarName . ' = ' . $params, false);
+        self::addLine("\n" . self::$sqlParamsVarName . ' = ' . $params, false);
 
         self::$paramsLineAdded = true;
     }
