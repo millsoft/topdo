@@ -1,14 +1,20 @@
-;----- IF pressed CTRL+WIN+ALT+7
-;----- mapped with "7" macro key on my mouse
-
-^!#7::
-;press CTRL+C
-Send , ^c
+; wo befindet sich die INput-Datei (In dieser Datei steht der ausgewählte Teil des Quellcodes):
 clipfile = D:\htdocs\topdo\data\input.txt
-outfile = D:\htdocs\topdo\data\output.txt
-tmpfile = D:\htdocs\topdo\data\tmp.txt
 
+; Output file, the new code will be stored here:
+outfile = D:\htdocs\topdo\data\output.txt
+
+
+;----- IF pressed CTRL+WIN+ALT+7
+^!#7::
+
+;---- SEND CTRL+C
+Send , ^c
+
+;----- Remove old clip file:
 FileDelete,%clipfile%
+
+;----- Insert the contents of the clipoard to the file:
 FileAppend,%clipboard%,%clipfile%
 
 ;call the parser -> this will generate the "out.txt" file
@@ -23,8 +29,6 @@ Clipboard := r
 ;paste (ctrl + v)
 Send , ^v
 
-;some sound
-SoundPlay *64
+;ich habe Fertig ;)
 
 return
-

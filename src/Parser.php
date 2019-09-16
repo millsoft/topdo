@@ -515,11 +515,15 @@ class Parser
                 $newParams[$key] = 0;
             }
 
-            $params = self::createArrayString($newParams);
-
+            //$params = self::createArrayString($newParams);
+            $finalParams = $newParams;
         }else{
-            $params = self::createArrayString(self::$sqlParams);
+            $finalParams = self::$sqlParams;
         }
+
+        //sort param array keys:
+        ksort($finalParams);
+        $params = self::createArrayString($finalParams);
 
         self::addLine(self::$sqlParamsVarName . ' = ' . $params, false);
 
