@@ -164,7 +164,7 @@ class Parser
                 $params[] = '$' . $arg->value->name;
             } elseif ($arg->value instanceof ArrayDimFetch) {
                 $params[] = self::parseArrayName($arg->value);
-            } elseif ($arg->value instanceof String_) {                
+            } elseif ($arg->value instanceof String_) {
                 $params[] = "'" . $arg->value->value . "'";
             } elseif ($arg->value instanceof ConstFetch) {
                 //Konstanten, z.B. true, false, etc...
@@ -320,7 +320,7 @@ class Parser
     }
 
     public static function parsePart($part){
-            
+
             if ($part instanceof EncapsedStringPart) {
                 $out = self::parseEncapsedStringPart($part);
             } elseif ($part instanceof Variable) {
@@ -388,7 +388,7 @@ class Parser
             //die("HERE!");
 
         }
-        
+
 
         if ($s instanceof Concat) {
             $sideVal = self::parseConcat($s);
@@ -407,10 +407,9 @@ class Parser
             $sideVal = ':' . $s->name;
             $valName = $s->name;
             $valVal = '$' . $s->name;
-
             $sideVal =  ':' . self::addSqlParam($valName, $valVal);
-            
-            
+
+
         } //Array:
         elseif ($s instanceof ArrayDimFetch) {
             $sideVal = ':' . self::parseArrayName($s);
@@ -481,7 +480,7 @@ class Parser
      *
      * @param $a
      * @param boolean $isRecursive
-     * @return void
+     * @return string
      */
     public static function parseArrayName($a, $isRecursive = false)
     {
@@ -591,7 +590,7 @@ class Parser
      * @return string the final name for the $name.
      */
     private static function addSqlParam($name, $val){
-        
+
         //Replace placeholder minus with underscore
         $name = str_replace('-', '_', $name);
 
@@ -602,6 +601,12 @@ class Parser
 
             //iterate index until we can use the key:
             $acceptableIndexFound = false;
+
+            print_r(self::$sqlParams);
+            echo "\n";
+            print_r($val);
+            echo "\n------\n";
+
 
             //start the additional found variables with this index:
             $index = 2;
@@ -639,7 +644,7 @@ class Parser
         self::$paramsLineAdded = false;
 
     }
-    
+
     /**
      * Is the first occurentce of a variabled string a " or ' ?
      * @param  [string] $code
@@ -690,7 +695,7 @@ class Parser
         //prepend SQL queries with an empty string, so the parser goes through a concat parser:
 
         $re = '/(\$.+?)=(.+?[\'\"])(SELECT|INSERT|UPDATE|DELETE)/i';
-        
+
         if($quote == "'"){
             $subst = '$1= \'\' . $2$3';
         }else{
@@ -765,7 +770,7 @@ class Parser
                     }
 
 
-                    
+
 
                 } elseif ($node instanceof Assign) {
 
@@ -785,11 +790,11 @@ class Parser
                 } elseif ($node instanceof Identifier) {
                     //print_r($node);die();
 
-                    
+
                 } elseif ($node instanceof PropertyFetch) {
                     //print_r($node);die();
 
-                    
+
                 } elseif ($node instanceof MethodCall) {
 
                     Parser::addLine(Parser::parseMethodCall($node));
