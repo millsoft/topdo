@@ -6,7 +6,7 @@ outfile = D:\htdocs\topdo\data\output.txt
 
 
 ;----- IF pressed CTRL+WIN+ALT+7
-^!#7::
+Capslock::
 
 ;---- SEND CTRL+C
 Send , ^c

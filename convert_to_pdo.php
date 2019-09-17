@@ -24,8 +24,12 @@ $codeOk = CodeChecker::check($testCode);
 if($codeOk){
 	$finalCode = Parser::parse($code, false);
 	echo $finalCode;
+}else{
+	echo "\n*** ERROR ***\n";
+	echo Collector::$items['error'];
+	echo "\n\n*** TEST CODE ***\n";
+	echo Collector::$items['test_code'];
 }
-
 
 
 

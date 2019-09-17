@@ -22,11 +22,19 @@
 			padding:5px;
 		}
 
+		.status{
+			border: 2px solid transparent;
+		}
+
+		.status.error{
+			border-color:red;
+		}
+
 	</style>
 </head>
 <body>
 	<h1>TWM to PDO</h1>
-	<p><strong>Dieser Script wandelt alten TWM Database Code in neuen PDO Code</strong></p>
+	<p><strong>Alten TWM from/toDatabase-Code ins PDO umwandeln</strong></p>
 
 
 	<table>
@@ -53,7 +61,7 @@ $this->Core->toDatabase($sql);
 				</td>
 
 				<td class="output">
-					<textarea  id="output"></textarea>
+					<textarea  id="output" class="status"></textarea>
 				</td>
 
 			</tr>
@@ -99,14 +107,29 @@ $this->Core->toDatabase($sql);
 
 	<script>
 
+		var $output = $("#output");
+		var $input = $("#input");
+
+
 		function parseCode(){
 				var params = {
-					"input" : $("#input").val()
+					"input" : $input.val()
 				};
 
+				$output.removeClass("error");
+
 				$.post("web_convert_ajax.php", params, function(re){
-					$("#output").val(re);
-				});			
+					
+					if(re.code_ok){
+						$output.val(re.parsed_code);
+					}else{
+						var out = re.error + "\n\n" + re.test_code;
+						$output.val(out);
+						$output.addClass("error");
+
+					}
+
+				}, 'JSON');			
 		}
 
 		$(function(){

@@ -7,11 +7,6 @@
  */
 ob_start();
 require_once __DIR__ . "/vendor/autoload.php";
-//require_once __DIR__ . "/src/Parser.php";
-
-
-//$inputFile = __DIR__ . "/data/input.txt";
-//$outputFile = __DIR__ . "/data/output.txt";
 
 //Prepare the code for php parser:
 
@@ -22,13 +17,20 @@ $testCode = Parser::parse($code, true);
 
 //Check the generated sourcecode for errors:
 $codeOk = CodeChecker::check($testCode);
-
 if($codeOk){
+
 	$finalCode = Parser::parse($code, false);
-	echo $finalCode;
+	if(ob_get_level()){
+		ob_clean();
+	}
+
+	Collector::$items['parsed_code'] = $finalCode;
+	//echo $finalCode;
 }else{
-	echo "// ***************** TESTCODE:\n";
-	echo $testCode;
+	//echo "// ***************** TESTCODE:\n";
+	//echo $testCode;
 }
 
-
+//output a json:
+header('Content-Type: application/json');
+echo json_encode(Collector::$items);

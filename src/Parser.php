@@ -424,7 +424,20 @@ class Parser
 
         } // $object->methodCall()
         elseif ($s instanceof MethodCall) {
+
+            $valName = $s->name;
+            $val = self::getCodeFromNode($s);
+
+            $sideVal = ':' . self::addSqlParam($valName, $val);
+
+            /*
+            die($sideVal);
+
+            $val = self::parseMethodCall($s);
+            die($val);
             $sideVal = ':' .  self::parseMethodCall($s);
+            */
+
         } // Ternary operator ($x == 1 ? 1 : 2) and functions()
         elseif ($s instanceof Ternary || $s instanceof FuncCall) {
 
@@ -755,8 +768,6 @@ class Parser
                     
 
                 } elseif ($node instanceof Assign) {
-                    //print_r($node);
-                    //die();
 
                     $var = '$' . $node->var->name . ' = ';
                     Parser::$curVar = $node->var->name;
@@ -765,24 +776,8 @@ class Parser
 
                 } elseif ($node instanceof Variable) {
 
-                    //print_r($node);
-                    //Parser::addLine(Parser::parseMethodCall($node));
-                    //KURWA
-                    //$pa = Parser::parsePart($node);
-                    //print_r($pa);
-                    //die("KURWA1");
-
-
-                    /*
-                    Parser::addLine(
-                          Parser::$quoteChar
-                        . Parser::parseConcat($node)
-                        . Parser::$quoteChar);
-                    */
-                        //die("VAR!");
                     //return NodeTraverser::DONT_TRAVERSE_CHILDREN;
-                        //print_r($node);
-                        //echo "VAR!";
+
 
                 } elseif ($node instanceof ArrayDimFetch) {
                     //print_r($node);die();
@@ -800,7 +795,7 @@ class Parser
                     Parser::addLine(Parser::parseMethodCall($node));
                     //Parser::$lines[] = $var . Parser::parseMethodCall($node);
                 } elseif ($node instanceof Concat) {
-                    //KURWA1
+
                     Parser::addLine(
                           Parser::$quoteChar
                         . Parser::parseConcat($node)
