@@ -295,7 +295,6 @@ class Parser
     //Parse the whole string that is splitted, eg: "string1" . $var . "string2"
     public static function parseConcat($node)
     {
-
         if ($node instanceof Concat) {
             $left = self::parseConcatSide($node, 'left');
             $right = self::parseConcatSide($node, 'right');
@@ -378,18 +377,6 @@ class Parser
 
 
 
-
-        //Concat...
-        if ($node->{$side} instanceof Concat) {
-            //$sideVal = self::parseConcat($node->{$side});
-            //echo "XXXX ";
-            //print_r($sideVal);
-            //die();
-            //die("HERE!");
-
-        }
-
-
         if ($s instanceof Concat) {
             $sideVal = self::parseConcat($s);
             return $sideVal;
@@ -412,8 +399,10 @@ class Parser
 
         } //Array:
         elseif ($s instanceof ArrayDimFetch) {
+            //print_r($s);
             $sideVal = ':' . self::parseArrayName($s);
-            $valName = self::parseArrayName($s);
+            //$valName = self::parseArrayName($s);
+
         } // $object->someproperty:
         elseif ($s instanceof  PropertyFetch) {
             $sideVal = self::parsePropertyFetch($s);
@@ -423,19 +412,10 @@ class Parser
 
         } // $object->methodCall()
         elseif ($s instanceof MethodCall) {
-
             $valName = $s->name;
             $val = self::getCodeFromNode($s);
-
             $sideVal = ':' . self::addSqlParam($valName, $val);
 
-            /*
-            die($sideVal);
-
-            $val = self::parseMethodCall($s);
-            die($val);
-            $sideVal = ':' .  self::parseMethodCall($s);
-            */
 
         } // Ternary operator ($x == 1 ? 1 : 2) and functions()
         elseif ($s instanceof Ternary || $s instanceof FuncCall) {
@@ -474,6 +454,8 @@ class Parser
     }
 
 
+
+
     /**
      * Get the last key of a array variable
      * That key will be used as sql :placeholder
@@ -485,41 +467,26 @@ class Parser
     public static function parseArrayName($a, $isRecursive = false)
     {
 
-
+        /*
         if ($a->var instanceof ArrayDimFetch) {
             $name = self::parseArrayName($a->var, true);
         } elseif ($a->var instanceof Variable) {
-            //$name = $a->var->name;
             $name = $a->dim->value;
         }
+        */
 
-        //print_r($a);
+        $code = self::getCodeFromNode($a);
 
-        $prettyPrinter = new PrettyPrinter\Standard;
-        $code = $prettyPrinter->prettyPrintExpr($a);
-
-
-        $re = '/\$(?P<var>.+?)(?P<dims>\[[\'\"].+\])+/';
-        preg_match_all($re, $code, $matches, PREG_SET_ORDER, 0);
-
-        $var = $matches[0]['var'];
-        $dims = substr($code, strlen($var) + 1);
-
-
-        $re2 = '/([\'\"](?<key>.+?)[\'\"])+/';
-        preg_match_all($re2, $code, $matches2, PREG_SET_ORDER, 0);
+        $newName = $code;
+        $newName = str_replace(["'", '"',  '[', ']', '$_', '$'], ['', '', ' ', ' ', '' , ''], $newName);
+        $newName = trim($newName);
+        $newName = str_replace([' ', '__'], '_', $newName);
 
 
         if (!$isRecursive) {
-            $lastKeyName = $matches2[count($matches2) - 1]['key'];
-
-            $lastKeyName = self::addSqlParam($lastKeyName, $code);
-            return $lastKeyName;
+            return self::addSqlParam($newName, $code);
         }
 
-
-        //return NodeTraverser::DONT_TRAVERSE_CHILDREN;
-        return $name;
     }
 
 
@@ -573,6 +540,11 @@ class Parser
             $finalParams = self::$sqlParams;
         }
 
+
+        //compress the param names:
+        self::updatePlaceholders($finalParams);
+
+
         //sort param array keys:
         ksort($finalParams);
         $params = self::createArrayString($finalParams);
@@ -580,6 +552,96 @@ class Parser
         self::addLine("\n" . self::$sqlParamsVarName . ' = ' . $params, false);
 
         self::$paramsLineAdded = true;
+    }
+
+
+    /**
+     * Update placeholders with smaller versions
+     * @param $params
+     */
+    private static function updatePlaceholders($params){
+        $params = self::shakeParams($params);
+
+        //get first param so we can find the correct line with the sourcecode:
+        $findParam = array_key_first($params);
+
+        foreach(self::$lines as &$line){
+            if(strpos($line,  ':' . $findParam)){
+                foreach($params as $oldParam => $newParam){
+                    $line = str_replace(':' . $oldParam, ':' . $newParam, $line);
+                }
+            }
+        }
+
+        self::$sqlParams = $params;
+
+    }
+
+
+    private static function shakeParams($params){
+
+
+        $newParams = [];
+
+        foreach($params as $param => $val){
+            $ex = explode('_', $param);
+
+            //Check if the var name end is numeric
+            $re = '/\d+$/m';
+            $numericEnd = preg_match_all($re, $param, $matches, PREG_SET_ORDER, 0);
+
+            $offsetEnd = $numericEnd ? 3 : 2;
+
+
+
+
+            if(count($ex) > 2){
+
+                $ex_limited = explode('_',  $param, count($ex)- $offsetEnd );
+                $newParam = $ex_limited[count($ex_limited)-1];
+
+
+                $finalParam = $newParam;
+
+            }else{
+                $finalParam = $param;
+            }
+
+
+            //Remove prepended POST_ _GET etc..
+            $newParam = preg_replace('/((POST|GET|REQUEST)\_)/m', '', $finalParam);
+            $isIdOrVal = preg_match_all('/(_(?<id_or_val>id|val)_)/', $param, $matches, PREG_SET_ORDER, 0);
+
+            if($isIdOrVal){
+
+                $id_or_val = $matches[0]['id_or_val'];
+               if(!stripos($finalParam, $id_or_val )){
+                   $finalParam = $id_or_val . '_' . $finalParam;
+               }
+            }
+
+
+
+
+            $newParams[$param] = $finalParam;
+
+
+
+        }
+
+        //order the keys by size, so we can replace them later (:id_example will be replaced before :id)
+        $keys = array_map('strlen', array_keys($newParams));
+        array_multisort($keys, SORT_DESC, $newParams);
+
+        return $newParams;
+    }
+
+
+    private static function reparseParams($params){
+
+        //$par = ArrayHelper::normalizeArray($params, '_');
+        $par = ArrayHelper::expandKeys($params, '_');
+        printr($par);
     }
 
     /**
@@ -602,10 +664,12 @@ class Parser
             //iterate index until we can use the key:
             $acceptableIndexFound = false;
 
+            /*
             print_r(self::$sqlParams);
             echo "\n";
             print_r($val);
             echo "\n------\n";
+            */
 
 
             //start the additional found variables with this index:
@@ -740,7 +804,7 @@ class Parser
             public function enterNode(Node $node)
             {
                 //DEBUG: uncomment that stuff for debugging
-                //$class = get_class($node);
+                $class = get_class($node);
                 //print_r("*** $class\n");
                 //print_r($node);
                 //die();
@@ -766,7 +830,7 @@ class Parser
 
                     //echo $var;
 
-            //return NodeTraverser::DONT_TRAVERSE_CHILDREN;
+                    //return NodeTraverser::DONT_TRAVERSE_CHILDREN;
                     }
 
 
@@ -836,4 +900,11 @@ class Parser
 
         return $outData;
     }
+}
+
+
+function printr($txt, $die = true){
+    print_r($txt);
+    echo "\n";
+    if($die){die();};
 }

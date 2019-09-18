@@ -1,13 +1,37 @@
-$sql = <<<sql
-SELECT * FROM fridge
-	WHERE
-		`action` = $action,
-		AND ip = '{$ip}'
-		AND test1 = {$_GET['TEST']}
-		AND test2 = {$_GET['TEST']['test2']}
-
-	LIMIT $limit
-sql;
-
-
-$loginAttempts = $this->Core->fromDatabase($sql, "@raw", true);
+$sql = "UPDATE `twm_dispositions` SET
+	`id_persons`=".$_POST['id_persons'].",
+	`val_persons_fullname`=(SELECT CONCAT(firstname, ' ', lastname) FROM twm_persons WHERE id=".$_POST['id_persons']."),
+	`val_persons_company`=(SELECT company FROM twm_persons WHERE id=".$_POST['id_persons']."),
+	`id_testcars`=".$_POST['id_testcars'].",
+	`val_testcars_licence_number`=(SELECT licence_number FROM twm_testcars WHERE id=".$_POST['id_testcars']."),
+	`start`='".$Helper->mysqlDate($_POST['start'])."',
+	`end`='".$Helper->mysqlDate($_POST['end'])."',
+	`days_testdrive`=".$_POST['days_testdrive'].",
+	`garage_start`='".$Helper->mysqlDate($_POST['garage_start'])."',
+	`garage_end`='".$Helper->mysqlDate($_POST['garage_end'])."',
+	`days_garage`=".$_POST['days_garage'].",
+	`id_options__costcenter`=".$_POST['id_options__costcenter'].",
+	`val_options__costcenter`=(SELECT meaning FROM twm_options WHERE id=".$_POST['id_options__costcenter']."),
+	`id_options__purpose`=".$_POST['id_options__purpose'].",
+	`val_options__purpose`=(SELECT meaning FROM twm_options WHERE id=".$_POST['id_options__purpose']."),
+	`id_transporter_start`=".$_POST['id_transporter_start'].",
+	`val_transporter_start`=(SELECT meaning FROM twm_transporter WHERE id=".$_POST['id_transporter_start']."),
+	`id_transporter_end`=".$_POST['id_transporter_end'].",
+	`val_transporter_end`=(SELECT meaning FROM twm_transporter WHERE id=".$_POST['id_transporter_end']."),
+	`id_options__location-transfer_start`=".$_POST['id_options__location-transfer_start'].",
+	`val_options__location-transfer_start`=(SELECT meaning FROM twm_options WHERE id=".$_POST['id_options__location-transfer_start']."),
+	`id_options__location-transfer_end`=".$_POST['id_options__location-transfer_end'].",
+	`val_options__location-transfer_end`=(SELECT meaning FROM twm_options WHERE id=".$_POST['id_options__location-transfer_end']."),
+	`id_options__external-status_start`=".$_POST['id_options__external-status_start'].",
+	`val_options__external-status_start`='".$_POST['val_options__external-status_start']."',
+	`id_options__external-status_end`=".$_POST['id_options__external-status_start'].",
+	`val_options__external-status_end`='".$_POST['val_options__external-status_start']."',
+	`id_contingents`=".$_POST['id_contingents'].",
+	`id_system_users__leftsignee`=". $leftSigneeId .",
+	`id_system_users__rightsignee`=". $rightSigneeId .",
+	`data_status`=1,
+	`send_twPackage`=" . (isset($_POST['send_twPackage']) ? $_POST['send_twPackage'] : 0) . ",
+	`id_users__changedBy`=".$User->id.",
+	`edit`=FROM_UNIXTIME(". time() ."),
+	`created`=FROM_UNIXTIME(". time() .")
+	WHERE `id`=".$id;

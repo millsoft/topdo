@@ -1,0 +1,1 @@
+Parse error: Syntax error, unexpected T_VARIABLE, expecting ')' on line 12
