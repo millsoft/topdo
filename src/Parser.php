@@ -65,6 +65,9 @@ class Parser
     //this will be set in the parse() method
     private static $isTest = false;
 
+    //Prepend string before each line to match the original prepended string: (will be autodetected)
+    public static $prependString = '';
+
     /**
      * Add new parsed code line
      *
@@ -92,7 +95,7 @@ class Parser
         $finalCode = $wVar . $code . ';';
         $finalCode = self::cleanUp($finalCode);
 
-        self::$lines[] = $finalCode;
+        self::$lines[] = self::$prependString .  $finalCode;
     }
 
     private static function decamelize($string)
@@ -286,11 +289,13 @@ class Parser
     {
         $output = [];
         foreach ($array as $key => $value) {
-            $output[] = "\t'{$key}' => $value";
+            $output[] = self::$prependString . "\t'{$key}' => $value";
         }
 
         $arrayString = implode(",\n", $output);
-        $out = "[\n" . $arrayString . "\n]";
+        $out = "[\n" 
+        . $arrayString
+        . "\n" . self::$prependString . "]";
 
         return $out;
     }
@@ -553,7 +558,7 @@ class Parser
         ksort($finalParams);
         $params = self::createArrayString($finalParams);
 
-        self::addLine("\n" . self::$sqlParamsVarName . ' = ' . $params, false);
+        self::addLine(self::$sqlParamsVarName . ' = ' . $params, false);
 
         self::$paramsLineAdded = true;
 
@@ -787,6 +792,15 @@ class Parser
         }
 
         $result = preg_replace($re, $subst, $code);
+
+
+        //Get the spaces/tabs before first line, so we can prepend these same lines in generated lines:
+        $re = '/(?<pre>^([ \t]+?))\$/m';
+        preg_match_all($re, $code, $matches, PREG_SET_ORDER, 0);
+
+        if(!empty($matches)){
+            self::$prependString = $matches[0]['pre'];
+        }
 
         return $result;
     }
