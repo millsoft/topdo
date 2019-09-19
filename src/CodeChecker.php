@@ -40,8 +40,6 @@ require_once(__DIR__ . '/../vendor/autoload.php');
 $sourcecode
 code;
 
-		printr($sourcecode);
-
 	Collector::$items['test_code'] = $sourcecode;
 
 
