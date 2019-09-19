@@ -527,22 +527,22 @@ class Parser
         }
 
 
+        $params = self::updatePlaceholders();
+
         if(self::$isTest){
             //change all values to some valid value (removes functions, vars, etc..)
+
             $newParams = [];
-            foreach(self::$sqlParams as $key=>$val){
+            foreach($params as $key=>$val){
                 $newParams[$key] = 0;
             }
 
             //$params = self::createArrayString($newParams);
             $finalParams = $newParams;
+
         }else{
-            $finalParams = self::$sqlParams;
+            $finalParams = $params;
         }
-
-
-        //compress the param names:
-        self::updatePlaceholders($finalParams);
 
 
         //sort param array keys:
@@ -552,6 +552,7 @@ class Parser
         self::addLine("\n" . self::$sqlParamsVarName . ' = ' . $params, false);
 
         self::$paramsLineAdded = true;
+
     }
 
 
@@ -559,8 +560,24 @@ class Parser
      * Update placeholders with smaller versions
      * @param $params
      */
-    private static function updatePlaceholders($params){
+    private static function updatePlaceholders($params = null){
+
+        if($params === null){
+            $params = self::$sqlParams;
+        }
+
+
         $params = self::shakeParams($params);
+        //printr(self::$sqlParams);
+
+        //Replace param array keys:
+        $newParams = [];
+        foreach(self::$sqlParams as $k => $v){
+            $newKey = $params[$k];
+            $newParams[$newKey] = $v;
+        }
+
+        self::$sqlParams = $newParams;
 
         //get first param so we can find the correct line with the sourcecode:
         $findParam = array_key_first($params);
@@ -573,7 +590,8 @@ class Parser
             }
         }
 
-        self::$sqlParams = $params;
+        return $newParams;
+
 
     }
 
@@ -609,13 +627,15 @@ class Parser
 
 
             //Remove prepended POST_ _GET etc..
-            $newParam = preg_replace('/((POST|GET|REQUEST)\_)/m', '', $finalParam);
+            $finalParam = preg_replace('/((POST|GET|REQUEST)\_)/m', '', $finalParam);
+            //printr($finalParam,0);
+
             $isIdOrVal = preg_match_all('/(_(?<id_or_val>id|val)_)/', $param, $matches, PREG_SET_ORDER, 0);
 
             if($isIdOrVal){
 
                 $id_or_val = $matches[0]['id_or_val'];
-               if(!stripos($finalParam, $id_or_val )){
+               if(stripos($finalParam, $id_or_val ) === false){
                    $finalParam = $id_or_val . '_' . $finalParam;
                }
             }
@@ -632,6 +652,8 @@ class Parser
         //order the keys by size, so we can replace them later (:id_example will be replaced before :id)
         $keys = array_map('strlen', array_keys($newParams));
         array_multisort($keys, SORT_DESC, $newParams);
+
+        //printr($newParams);
 
         return $newParams;
     }
