@@ -345,6 +345,20 @@ class ArrayHelper
     }
 
 
+    /**
+     * Version for php < 7.3
+     * @param array $arr
+     *
+     * @return int|string|null
+     */
+    public static function array_key_first(array $arr) {
+        foreach($arr as $key => $unused) {
+            return $key;
+        }
+        return NULL;
+    }
+
+
 
 
 }

@@ -580,7 +580,7 @@ class Parser
         self::$sqlParams = $newParams;
 
         //get first param so we can find the correct line with the sourcecode:
-        $findParam = array_key_first($params);
+        $findParam = ArrayHelper::array_key_first($params);
 
         foreach(self::$lines as &$line){
             if(strpos($line,  ':' . $findParam)){
