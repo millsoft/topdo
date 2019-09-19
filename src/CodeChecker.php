@@ -12,9 +12,11 @@ class CodeChecker{
 
         //is there fromDatabase / toDatabase? we need these mthods to be able to check the sql:
 
-		if(!preg_match('/(from|to)Database/', $sourcecode)){
+
+
+        if(!preg_match('/(from|to)Database/', $sourcecode)){
 			//find the first variable in code (usually $sql):
-			preg_match_all('/(\$.+) ?=/m', $sourcecode, $matches, PREG_SET_ORDER, 0);
+			preg_match_all('/(\$.+?) ?=/m', $sourcecode, $matches, PREG_SET_ORDER, 0);
 
 			if(!empty($matches)){
 				$firstVar =  substr($matches[0][1], 1) ;
@@ -37,6 +39,8 @@ require_once(__DIR__ . '/../vendor/autoload.php');
 
 $sourcecode
 code;
+
+		printr($sourcecode);
 
 	Collector::$items['test_code'] = $sourcecode;
 

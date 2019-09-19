@@ -74,21 +74,25 @@ class Parser
      */
     public static function addLine($code, $withVar = true)
     {
+
+
         $wVar = '';
         if ($withVar) {
 
             if(stripos($code, 'todatabase') !== false){
                 //toDatabase no need for var:
             }else{
+
                 $wVar = '$' .  self::$curVar . ' = ';
             }
 
 
         }
 
+        $finalCode = $wVar . $code . ';';
+        $finalCode = self::cleanUp($finalCode);
 
-        $code = self::cleanUp($code);
-        self::$lines[] = $wVar . $code . ';';
+        self::$lines[] = $finalCode;
     }
 
     private static function decamelize($string)
@@ -820,7 +824,7 @@ class Parser
             public function enterNode(Node $node)
             {
                 //DEBUG: uncomment that stuff for debugging
-                $class = get_class($node);
+                //$class = get_class($node);
                 //print_r("*** $class\n");
                 //print_r($node);
                 //die();
