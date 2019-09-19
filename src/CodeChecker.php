@@ -12,6 +12,12 @@ class CodeChecker{
 
         //is there fromDatabase / toDatabase? we need these mthods to be able to check the sql:
 
+		if(Config::get("checkDatabase", true) === false){
+			//checker was disabled in the config file:
+			Collector::$items['code_ok'] = true;
+			return true;
+
+		}
 
 
         if(!preg_match('/(from|to)Database/', $sourcecode)){
