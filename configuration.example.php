@@ -6,6 +6,8 @@
         //Should the generated query be checked for errors? (valid database connection is required)
         public $checkDatabase = true;
 
+        public $beautifySql = true;
+
         public $db = [
             
             'host' => 'vm-dev',

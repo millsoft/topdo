@@ -18,6 +18,7 @@ $code = '<?php' . "\n" . file_get_contents($inputFile);
 //Generate the code with test parameters so we can test the whole code:
 $testCode = Parser::parse($code, true);
 
+
 //Check the generated sourcecode for errors:
 $codeOk = CodeChecker::check($testCode);
 

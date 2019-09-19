@@ -9,7 +9,8 @@
         }
     ],
     "require": {
-        "nikic/php-parser": "^4.2"
+        "nikic/php-parser": "^4.2",
+        "jdorn/sql-formatter": "^1.2"
     },
 
     "autoload": {

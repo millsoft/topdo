@@ -60,6 +60,7 @@ class Parser
     //Did the input had the fromDatabase / toDatabase function? If not, we will print the extracted parameters of the $sql in the last line.
     public static $hadDatabaseFunction = false;
     private static $paramsLineAdded = false;
+    private static $sqlQueryAdded = false;
 
     //if test, only test code will be returned.
     //this will be set in the parse() method
@@ -67,6 +68,40 @@ class Parser
 
     //Prepend string before each line to match the original prepended string: (will be autodetected)
     public static $prependString = '';
+
+
+    public static function beautifySql($code){
+        $quote = substr($code, 0,1);
+        if($quote === '"' || $quote === "'"){
+            //get the real sql code without quotes:
+            $code = substr($code, 1, -1);
+            $code = SqlFormatter::format($code, false);
+            $finalCode = $quote . $code . $quote;
+        }else{
+            $finalCode =  SqlFormatter::format($code, false);
+        }
+
+        //prepend:
+        $lines = [];
+        $ex = explode("\n", $finalCode);
+        $lineNr = 0;
+        foreach($ex as $e){
+            if($lineNr > 0){
+                $lines[] = self::$prependString . "\t" . $e;
+            }else{
+                //first line doesn't need indentation as it is already indented
+                $lines[] =  $e;
+            }
+
+            $lineNr++;
+        }
+
+        $finalCode = implode("\n", $lines);
+
+
+        return $finalCode;
+
+    }
 
     /**
      * Add new parsed code line
@@ -77,6 +112,14 @@ class Parser
      */
     public static function addLine($code, $withVar = true)
     {
+
+
+        if(Config::get("beautifySql", true)){
+            if(!self::$sqlQueryAdded){
+                $code = self::beautifySql($code);
+                self::$sqlQueryAdded = true;
+            }
+        }
 
 
         $wVar = '';
@@ -93,9 +136,15 @@ class Parser
         }
 
         $finalCode = $wVar . $code . ';';
+
+
         $finalCode = self::cleanUp($finalCode);
 
+
+
         self::$lines[] = self::$prependString .  $finalCode;
+
+
     }
 
     private static function decamelize($string)
@@ -731,6 +780,7 @@ class Parser
         self::$countVar = 0;
         self::$hadDatabaseFunction = false;
         self::$paramsLineAdded = false;
+        self::$sqlQueryAdded = false;
 
     }
 
