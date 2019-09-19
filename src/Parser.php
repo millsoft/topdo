@@ -138,7 +138,7 @@ class Parser
                 self::$hadDatabaseFunction  = true;
                 $isDbMethod = true;
                 //kein Core, sondern DB
-                $fn[] = 'DB::';
+                //$fn[] = 'DB::';
             } else {
 
                 $isDbMethod = false;
