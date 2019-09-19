@@ -10,9 +10,7 @@ class CodeChecker{
 	public static function check($sourcecode){
 
 
-        //is there fromDatabase / toDatabase? we need thos to be able to check the sql:
-
-
+        //is there fromDatabase / toDatabase? we need these mthods to be able to check the sql:
 
 		if(!preg_match('/(from|to)Database/', $sourcecode)){
 			//find the first variable in code (usually $sql):

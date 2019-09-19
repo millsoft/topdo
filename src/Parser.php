@@ -917,8 +917,10 @@ class Parser
         $outData = implode("\n", Parser::$lines);
 
         //Make sure the from/todatabase are from DB class
-        $re = '/= (from|to)Database/';
-        $outData = preg_replace($re, '= DB::$1Database', $outData);
+        $re = '/(= )?(from|to)Database/';
+        $outData = preg_replace($re, '$1DB::$2Database', $outData);
+
+        printr($outData);
 
         return $outData;
     }
