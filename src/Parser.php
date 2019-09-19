@@ -659,12 +659,6 @@ class Parser
     }
 
 
-    private static function reparseParams($params){
-
-        //$par = ArrayHelper::normalizeArray($params, '_');
-        $par = ArrayHelper::expandKeys($params, '_');
-        printr($par);
-    }
 
     /**
      * Add a sql param name+value
@@ -919,8 +913,6 @@ class Parser
         //Make sure the from/todatabase are from DB class
         $re = '/(= )?(from|to)Database/';
         $outData = preg_replace($re, '$1DB::$2Database', $outData);
-
-        printr($outData);
 
         return $outData;
     }
