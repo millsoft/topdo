@@ -135,7 +135,7 @@ class DB
 
 
         if (!$field) {
-            self::warning('$field param is missing or empty, will assume `id` as field');
+            die('$field param is missing or empty, will assume `id` as field');
             $field = 'id';
         }
 
@@ -484,7 +484,7 @@ class DB
             $withLog = $__pdo__;
             $__pdo__ = [];
 
-            self::warning('__pdo__ is bool, $withLog paramater replace with params bool, params is set to array');
+            die('__pdo__ is bool, $withLog paramater replace with params bool, params is set to array');
         }
 
         if (!$sql) {
@@ -519,9 +519,8 @@ class DB
         if ($withLog) {
             // check for module "logs"
             if (!class_exists('Logs')) {
-                self::warning('Module "LOGS" NOT loaded while withLog set!');
-
-                return (false);
+                //die('Module "LOGS" NOT loaded while withLog set!');
+                //return (false);
             }
 
             // INSERT
@@ -589,7 +588,7 @@ class DB
                 }
             }
 
-            if ($exe === false) {
+            if (isset($exe) && $exe === false) {
                 // 0 SQLSTATE error code (a five characters alphanumeric identifier defined in the ANSI SQL standard).
                 // 1 Driver-specific error code.
                 // 2 Driver-specific error message.
