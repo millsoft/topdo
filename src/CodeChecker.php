@@ -22,8 +22,10 @@ class CodeChecker{
 
         if(!preg_match('/(from|to)Database/', $sourcecode)){
 			//find the first variable in code (usually $sql):
-			preg_match_all('/(\$.+?) ?=/m', $sourcecode, $matches, PREG_SET_ORDER, 0);
 
+
+
+			preg_match_all('/(\$.+?) ?=/mi', $sourcecode, $matches, PREG_SET_ORDER, 0);
 			if(!empty($matches)){
 				$firstVar =  substr($matches[0][1], 1) ;
 			}else{
